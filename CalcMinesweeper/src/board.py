@@ -20,9 +20,10 @@ Note: All rendering should be done elsewhere. This class just contains the rules
 """
 
 class Board:
-    def __init__(self):
-        self.rows = constants.NUM_ROWS
-        self.cols = constants.NUM_COLS
+    def __init__(self,rows,cols,cell_size):
+        self.rows = rows
+        self.cols = cols
+        self.cell_size = cell_size
 
         self.game_board = np.zeros((self.rows, self.cols))
         self.last_player = None
@@ -85,58 +86,12 @@ class Board:
         - Sets self.winner to "Tie" if the board is full and there is no winner.
         - Leaves self.winner as None if the game should continue. (No winner, or tie)
         """
+        # want to win when all non-mine squares are filled
+        # otherwise we lose
 
-        if self.last_move is None:
-            return
 
 
-        win_directions = [
-            (1, 0),  # vertical win (same column different rows)
-            (0, 1),  # horizontal win (same row different columns)
-            (1, 1),  # diagonal win (top left to bottom right)
-            (1, -1),  # diagonal win (top right to bottom left)
-        ]
 
-        # For each direction, count how many of the last player's pieces are connected in a straight line through the last move.
-        # Example for (1, 0) = vertical:
-        #   - Start at the last move.
-        #   - Walk down (1, 0) while the same identifier continues.
-        #   - Walk up (-1, 0) while the same identifier continues.
-        # If the total connected count reaches the required length, we found a winner.
-
-        for row_dir, col_dir in win_directions:
-            same_identifier_count = 1
-
-            current_row = self.last_move[0] + row_dir
-            current_col = self.last_move[1] + col_dir
-
-            while 0 <= current_row < self.rows and 0 <= current_col < self.cols:
-                if self.game_board[current_row][current_col] == self.last_player.identifier:
-                    same_identifier_count += 1
-                    current_row = current_row + row_dir
-                    current_col = current_col + col_dir
-                else:
-                    break
-
-            current_row = self.last_move[0] - row_dir
-            current_col = self.last_move[1] - col_dir
-
-            while 0 <= current_row < self.rows and 0 <= current_col < self.cols:
-                if self.game_board[current_row][current_col] == self.last_player.identifier:
-                    same_identifier_count += 1
-                    current_row = current_row - row_dir
-                    current_col = current_col - col_dir
-                else:
-                    break
-
-            if same_identifier_count == self.rows:
-                self.winner = self.last_player
-                return
-
-        # If no winner, then check for tie
-        if len(self.get_possible_moves()) == 0:
-            self.winner = "Tie"
-            return
 
 
     def get_possible_moves(self) -> list[tuple[int, int]]:

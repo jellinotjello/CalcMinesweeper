@@ -31,8 +31,11 @@ class GameState(Enum):
 
 class GameManager:
 
-    def __init__(self, player1, player2):
-        self.board = Board()
+    def __init__(self, player1, player2,rows,cols,cell_size):
+        self.NUM_ROWS = rows
+        self.NUM_COLS = cols
+        self.CELL_SIZE = cell_size
+        self.board = Board(self.NUM_ROWS,self.NUM_COLS,self.CELL_SIZE)
 
         # players can either be Human or AI players
         self.player1 = player1
@@ -66,7 +69,7 @@ class GameManager:
         if self.game_state != GameState.PLAYING:
             return
 
-        chosen_move = self.current_player.choose_move(self.board, pending_move)
+        chosen_move = self.current_player.choose_move(self.board, pending_move,self.NUM_ROWS,self.NUM_COLS,self.CELL_SIZE)
 
         if self.board.apply_move(chosen_move, self.current_player):
 
@@ -75,44 +78,9 @@ class GameManager:
 
             self.board.check_winner()
             if self.board.winner is not None:
-                self.feed_rewards(self.board.winner)
                 self.game_state = GameState.GAME_OVER
             else:
                 self.current_player = self.player2 if self.current_player == self.player1 else self.player1
-
-
-    def feed_rewards(self, winning_player):
-
-        """
-        Give end-of-game rewards to AI players.
-
-        - Tie: no rewards given
-        - Winning AI: reward = 1
-        - Losing AI: reward = 0
-        """
-
-        if winning_player == "Tie":
-            if self.player1.is_ai_player:
-                self.player1.update_game_over_training_diagnostics("ties")
-            if self.player2.is_ai_player:
-                self.player2.update_game_over_training_diagnostics("ties")
-            return
-
-        if winning_player.is_ai_player:
-            winning_player.feed_reward(1)
-            winning_player.update_game_over_training_diagnostics("wins")
-
-        if winning_player == self.player1:
-            loosing_player = self.player2
-            if loosing_player.is_ai_player:
-                loosing_player.feed_reward(0)
-                loosing_player.update_game_over_training_diagnostics("losses")
-
-        if winning_player == self.player2:
-            loosing_player = self.player1
-            if loosing_player.is_ai_player:
-                loosing_player.feed_reward(0)
-                loosing_player.update_game_over_training_diagnostics("losses")
 
 
     def is_player_one_turn(self):

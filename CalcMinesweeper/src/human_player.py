@@ -18,7 +18,7 @@ class HumanPlayer(Player):
         self.is_ai_player = False
 
 
-    def choose_move(self, board, move_input) -> tuple[int, int]|None:
+    def choose_move(self, board, move_input,NUM_ROWS,NUM_COLS,CELL_SIZE) -> tuple[int, int]|None:
 
         """
         Convert move_input (mouse click in pixels) into a board move (row, col).
@@ -35,13 +35,13 @@ class HumanPlayer(Player):
         if move_input is None:
             return None
 
-        board_origin_x = constants.BOARD_CENTER_X - (constants.CELL_SIZE * int(constants.NUM_COLS / 2))
-        board_origin_y = constants.BOARD_CENTER_Y - (constants.CELL_SIZE * int(constants.NUM_ROWS / 2))
-        bounds = int(constants.CELL_SIZE / 2), int(constants.CELL_SIZE / 2)
-        for row in range(constants.NUM_ROWS):
-            for col in range(constants.NUM_COLS):
-                row_screen = board_origin_y + row * constants.CELL_SIZE
-                col_screen = board_origin_x + col * constants.CELL_SIZE
+        board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * int(NUM_COLS / 2))
+        board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * int(NUM_ROWS / 2))
+        bounds = int(CELL_SIZE / 2), int(CELL_SIZE / 2)
+        for row in range(NUM_ROWS):
+            for col in range(NUM_COLS):
+                row_screen = board_origin_y + row * CELL_SIZE
+                col_screen = board_origin_x + col * CELL_SIZE
                 if self.move_within_bounds(move_input, (col_screen, row_screen), bounds):
                     return row, col
 

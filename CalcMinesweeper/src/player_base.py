@@ -21,7 +21,7 @@ class Player:
         self.is_ai_player = None
 
 
-    def choose_move(self, board, move_input):
+    def choose_movechoose_move(self, board, move_input,NUM_ROWS,NUM_COLS,CELL_SIZE):
 
         """
         Choose a move to apply to the board.

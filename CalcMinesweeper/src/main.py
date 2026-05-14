@@ -1,13 +1,11 @@
-########################################################################################################################
-###                                            ML RL Tic-Tac-Toe                                                     ###
-########################################################################################################################
 from collections.abc import Sequence
 from enum import Enum
 import pygame
 from pygame import mouse
+import pyautogui
 
 import constants
-from src.ai_player import AIPlayer
+
 from src.game_manager import GameManager, GameState
 from src.human_player import HumanPlayer
 
@@ -18,46 +16,30 @@ from src.utilities import load_image, draw_image, draw_polygon, draw_rect_center
 pygame.init()
 window = pygame.display.set_mode((constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT))
 pygame.display.set_caption('Tic-Tac-Toe')
+Images = {
+    "1" : load_image("1.png"),
+    "2" : load_image("2.png"),
+    "3" : load_image("3.png"),
+    "4" : load_image("4.png"),
+    "5" : load_image("5.png"),
+    "6" : load_image("6.png"),
+    "7" : load_image("7.png"),
+    "8" : load_image("8.png"),
+    "Zero" : load_image("Zero.png"),
+    "Bomb" : load_image("Bomb.png"),
+    "Flag" : load_image("Flag.png"),
+}
 
 # region Global Gameplay Variables -------------------------------------------------------------------------------------
+NUM_ROWS = 5
+NUM_COLS = 7
+CELL_SIZE = min(((constants.WINDOW_WIDTH - 20) /  NUM_COLS),((constants.WINDOW_HEIGHT - 20) /  NUM_ROWS))
+CELL_SIZE = 75
 
-# Application modes
-class Mode(Enum):
-    # Two AI players train by playing against each other. No visuals are rendered to the screen.
-    # This is the fastest training method and should be used when developing.
-    HEADLESS_TRAINING = 0
+player1 = HumanPlayer(True)
+player2 = HumanPlayer(False)
 
-    # Two AI players train by playing against each other. Visuals are rendered to the screen.
-    # AI player will choose a move each frame. The see the training set FRAME_RATE in constants
-    # file to a low number, (example FRAME_RATE = 2),
-    # This training method should only be used to see the training in action (showcasing).
-    TRAINING = 1
-
-    # One human player (player 1) and one AI player (player 2). AI player will use policy defined by
-    # POLICY_FILE in constants file. AI will not train.
-    HUMAN_PLAY_AI = 2
-
-    # Two Human players
-    HUMAN_PLAY_HUMAN = 3
-
-# Set the current mode here
-mode = Mode.HUMAN_PLAY_HUMAN
-
-if mode == Mode.HEADLESS_TRAINING:
-    player1 = AIPlayer(True)
-    player2 = AIPlayer(False)
-elif mode == Mode.TRAINING:
-    player1 = AIPlayer(True)
-    player2 = AIPlayer(False)
-elif mode == Mode.HUMAN_PLAY_AI:
-    player1 = HumanPlayer(True)
-    player2 = AIPlayer(False)
-    player2.load_policy()
-else:
-    player1 = HumanPlayer(True)
-    player2 = HumanPlayer(False)
-
-game_manager = GameManager(player1, player2)
+game_manager = GameManager(player1, player2,NUM_ROWS,NUM_COLS,CELL_SIZE)
 episode_count = 0
 player_move_input = None
 
@@ -79,27 +61,13 @@ def animate() -> None:
     player_move_input = None
 
     # If AI is training, automatically restart next game. After all training episodes save the learned AI policy
-    if (mode == Mode.HEADLESS_TRAINING or mode == Mode.TRAINING) and game_manager.game_state == GameState.GAME_OVER:
-        game_manager.reset()
-        episode_count += 1
-        if episode_count >= constants.EPISODES:
-            if game_manager.player1.is_ai_player:
-                game_manager.player1.save_policy()
-            if game_manager.player2.is_ai_player:
-                game_manager.player2.save_policy()
 
 
 def paint() -> None:
     draw_game_board()
     draw_player_moves()
 
-    if game_manager.game_state == GameState.PLAYING:
-        if game_manager.is_player_one_turn():
-            draw_player_one_turn()
-        else:
-            draw_player_two_turn()
-
-    elif game_manager.game_state == GameState.GAME_OVER:
+    if game_manager.game_state == GameState.GAME_OVER:
         draw_winner()
         draw_reset_button()
 
@@ -109,15 +77,21 @@ def draw_game_board() -> None:
     """
     Draws the empty Tic-Tac-Toe game board. (two vertical and two horizontal lines)
     """
+    # getting the mouse position
+    x, y = pyautogui.position()
+    draw_image(window,Images["1"],(300,300),0,1)
 
-    half_cell_size = constants.CELL_SIZE / 2
-    vertical_line = (1, constants.CELL_SIZE * constants.NUM_ROWS)
-    horizontal_line = (constants.CELL_SIZE * constants.NUM_COLS, 1)
+    half_cell_size = CELL_SIZE / 2
+    vertical_line = (1, CELL_SIZE * NUM_ROWS)
+    horizontal_line = (CELL_SIZE * NUM_COLS, 1)
 
-    draw_rect_center(window, (constants.BOARD_CENTER_X - half_cell_size, constants.BOARD_CENTER_Y), vertical_line, constants.COLOR_WHITE)
-    draw_rect_center(window, (constants.BOARD_CENTER_X + half_cell_size, constants.BOARD_CENTER_Y), vertical_line, constants.COLOR_WHITE)
-    draw_rect_center(window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y - half_cell_size), horizontal_line, constants.COLOR_WHITE)
-    draw_rect_center(window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y + half_cell_size), horizontal_line, constants.COLOR_WHITE)
+    for i in range(0, NUM_COLS+1):
+        draw_rect_center(window,
+                         (constants.BOARD_CENTER_X - CELL_SIZE * (i - (NUM_COLS ) / 2),
+                          constants.BOARD_CENTER_Y), vertical_line, constants.COLOR_WHITE)
+    for i in range(0, NUM_ROWS+1):
+        draw_rect_center(window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y - CELL_SIZE * (
+                i - (NUM_ROWS) / 2)), horizontal_line, constants.COLOR_WHITE)
 
 
 def draw_player_moves() -> None:
@@ -128,27 +102,18 @@ def draw_player_moves() -> None:
 
     # Convert board coordinates (row, col) into screen coordinates for drawing.
     # The board is centered at (BOARD_CENTER_X, BOARD_CENTER_Y).
-    board_origin_x = constants.BOARD_CENTER_X - (constants.CELL_SIZE * int(constants.NUM_COLS / 2))
-    board_origin_y = constants.BOARD_CENTER_Y - (constants.CELL_SIZE * int(constants.NUM_ROWS / 2))
+    board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * (NUM_COLS / 2))
+    board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
 
-    for row in range(constants.NUM_ROWS):
-        for col in range(constants.NUM_COLS):
-            row_screen = board_origin_y + row * constants.CELL_SIZE
-            col_screen = board_origin_x + col * constants.CELL_SIZE
+    for row in range(NUM_ROWS):
+        for col in range(NUM_COLS):
+            row_screen = board_origin_y + (row + 0.5) * CELL_SIZE
+            col_screen = board_origin_x + (col + 0.5) * CELL_SIZE
 
             if game_manager.board.game_board[row][col] == game_manager.player1.identifier:
                 draw_text(window, "X", 50, constants.PLAYER_1_COLOR, (col_screen, row_screen))
             elif game_manager.board.game_board[row][col] == game_manager.player2.identifier:
                 draw_text(window, "O", 50, constants.PLAYER_2_COLOR, (col_screen, row_screen))
-
-
-def draw_player_one_turn() -> None:
-    draw_text(window, "Player One", 50, constants.PLAYER_1_COLOR, (int(constants.WINDOW_WIDTH * 0.25), 100))
-
-
-def draw_player_two_turn() -> None:
-    draw_text(window, "Player Two", 50, constants.PLAYER_2_COLOR, (int(constants.WINDOW_WIDTH * 0.75), 100))
-
 
 def draw_winner() -> None:
 
@@ -231,11 +196,6 @@ def play_game():
     reset()
     
     # If training in headless mode then no rendering (pygame) is needed
-    if mode == Mode.HEADLESS_TRAINING:
-        while episode_count < constants.EPISODES:
-            # episode_count is updated in animate
-            animate()
-        return
         
     run = True
     frame_rate = int(constants.FRAME_RATE)
