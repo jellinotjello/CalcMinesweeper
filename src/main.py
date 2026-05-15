@@ -4,7 +4,6 @@ from collections.abc import Sequence
 from enum import Enum
 import pygame
 from pygame import mouse
-import pyautogui
 
 import constants
 from src.Square import Square
@@ -18,7 +17,7 @@ from src.utilities import load_image, draw_image, draw_polygon, draw_rect_center
 
 pygame.init()
 
-pygame.display.set_caption('Tic-Tac-Toe')
+pygame.display.set_caption('Minesweeper')
 Images = {
     "1" : load_image("1.png"),
     "2" : load_image("2.png"),
@@ -34,12 +33,14 @@ Images = {
     "Hidden" : load_image("Hidden.png"),
 }
 
-# region Global Gameplay Variables -------------------------------------------------------------------------------------
-NUM_ROWS = 80
-NUM_COLS = 100
-NUM_MINES = 1
-CELL_SIZE = min(((constants.WINDOW_WIDTH - 20) /  NUM_COLS),((constants.WINDOW_HEIGHT - 20) /  NUM_ROWS))
-scale = CELL_SIZE / 128
+# region Global Gameplay Variables -------------------------------------------------------------------------------------\
+NUM_ROWS = 00
+NUM_COLS = 00
+NUM_MINES = 00
+CELL_SIZE = 00
+scale = 00
+Title = True
+
 have_mines_been_placed = False
 mines = []
 squares = []
@@ -47,15 +48,29 @@ squares = []
 player1 = HumanPlayer(True)
 player2 = HumanPlayer(False)
 
-game_manager = GameManager(player1,NUM_ROWS,NUM_COLS, CELL_SIZE)
-episode_count = 0
+game_manager = GameManager(player1, NUM_ROWS, NUM_COLS, CELL_SIZE)
 player_move_input = None
 
 # Reset button for Human players to restart game
 reset_button = None
 
 # endregion ------------------------------------------------------------------------------------------------------------
+def startgame(cols,rows,mines):
+    global NUM_ROWS
+    global NUM_COLS
+    global NUM_MINES
+    global CELL_SIZE
+    global scale
+    global game_manager
 
+    NUM_ROWS = rows
+    NUM_COLS = cols
+    NUM_MINES = mines
+    CELL_SIZE = min(((constants.WINDOW_WIDTH - 20) / NUM_COLS), ((constants.WINDOW_HEIGHT - 20) / NUM_ROWS))
+    scale = CELL_SIZE / 128
+    game_manager = GameManager(player1, NUM_ROWS, NUM_COLS, CELL_SIZE)
+
+startgame(10,10,10)
 
 def animate() -> None:
 
@@ -70,17 +85,25 @@ def animate() -> None:
 
     # If AI is training, automatically restart next game. After all training episodes save the learned AI policy
 
+    # TODO: add highlight shi here
+    game_manager.animate(mouse.get_pos(), NUM_ROWS, NUM_COLS, CELL_SIZE)
 
 def paint() -> None:
     global have_mines_been_placed, NUM_MINES
+    global Title
+
+    if Title:
+        draw_rect_center(constants.window,(constants.BOARD_CENTER_X,constants.BOARD_CENTER_Y),(600,600),constants.COLOR_RED)
+        return
+
     draw_game_board()
     draw_player_moves()
     draw_squares()
+
     if not have_mines_been_placed:
         for mine in range(NUM_MINES):
             draw_mine_positions()
     have_mines_been_placed = True
-    print(game_manager.board.game_board)
 
     if game_manager.game_state == GameState.GAME_OVER:
         draw_winner()
@@ -93,7 +116,7 @@ def draw_game_board() -> None:
     Draws the empty Tic-Tac-Toe game board. (two vertical and two horizontal lines)
     """
     # getting the mouse position
-    x, y = pyautogui.position()
+    # x, y = pyautogui.position()
 
     half_cell_size = CELL_SIZE / 2
     vertical_line = (1, CELL_SIZE * NUM_ROWS)
@@ -107,12 +130,16 @@ def draw_game_board() -> None:
         draw_rect_center(constants.window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y - CELL_SIZE * (
                 i - (NUM_ROWS) / 2)), horizontal_line, constants.COLOR_WHITE)
 
+    
+
 
 def random_square():
     rand_row = random.randint(0, NUM_ROWS-1)
     rand_col = random.randint(0, NUM_COLS-1)
     move = (rand_row, rand_col)
     return move
+
+
 
 def draw_mine_positions():
     global mines
@@ -134,8 +161,9 @@ def draw_mine_positions():
                 break
         move = a1
 
-    row_screen = board_origin_y + (move[0] + 0.5) * CELL_SIZE
     col_screen = board_origin_x + (move[1] + 0.5) * CELL_SIZE
+    row_screen = board_origin_y + (move[0] + 0.5) * CELL_SIZE
+
     mine = Square(row_screen, col_screen, "Mine", Images["Bomb"])
     game_manager.board.game_board[move[0]][move[1]] = 2
     mines.append(mine)
@@ -210,13 +238,14 @@ def process_mouse_event(event: pygame.event.Event) -> None:
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
         if game_manager.game_state == GameState.GAME_OVER:
             if reset_button is not None and reset_button.collidepoint(event.pos):
-                game_manager.reset()
-        elif game_manager.game_state == GameState.PLAYING:
+                reset()
+        elif game_manager.game_state == GameState.PLAYING and Title is False:
             x_pos, y_pos = mouse.get_pos()
             player_move_input = x_pos, y_pos
 
 
 def process_key_event(event: pygame.event.Event) -> None:
+    global Title
 
     """
     This method is only called when a key event occurs.
@@ -225,6 +254,8 @@ def process_key_event(event: pygame.event.Event) -> None:
     """
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
         reset()
+    if pygame.key.get_pressed()[pygame.K_p]:
+        Title = False
 
 
 def process_keys_held(keys: Sequence[bool]) -> None:

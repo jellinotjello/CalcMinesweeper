@@ -18,6 +18,25 @@ class HumanPlayer(Player):
         self.is_ai_player = False
 
 
+    def is_mouse_on_tile(self, position, NUM_ROWS, NUM_COLS, CELL_SIZE):
+        board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * int(NUM_COLS / 2))
+        board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * int(NUM_ROWS / 2))
+        Offset = [0.5, 0.5]
+        if NUM_COLS > NUM_ROWS:
+            Offset = [0, .5]
+        elif NUM_ROWS > NUM_COLS:
+            Offset = [.5, 0]
+        bounds = int(CELL_SIZE / 2), int(CELL_SIZE / 2)
+        for row in range(NUM_ROWS):
+            for col in range(NUM_COLS):
+                row_screen = board_origin_y + (row + Offset[0]) * CELL_SIZE
+                col_screen = board_origin_x + (col + Offset[1]) * CELL_SIZE
+                if self.move_within_bounds(position, (col_screen, row_screen), bounds):
+                    return row, col
+
+        return None
+
+
     def choose_move(self, board, move_input,NUM_ROWS,NUM_COLS,CELL_SIZE) -> tuple[int, int]|None:
 
         """
@@ -37,12 +56,18 @@ class HumanPlayer(Player):
 
         board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * int(NUM_COLS / 2))
         board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * int(NUM_ROWS / 2))
+        Offset = [0.5,0.5]
+        if NUM_COLS > NUM_ROWS:
+            Offset = [0,.5]
+        elif NUM_ROWS > NUM_COLS:
+            Offset = [.5,0]
         bounds = int(CELL_SIZE / 2), int(CELL_SIZE / 2)
         for row in range(NUM_ROWS):
             for col in range(NUM_COLS):
-                row_screen = board_origin_y + row * CELL_SIZE
-                col_screen = board_origin_x + col * CELL_SIZE
+                row_screen = board_origin_y + (row + Offset[0]) * CELL_SIZE
+                col_screen = board_origin_x + (col + Offset[1]) * CELL_SIZE
                 if self.move_within_bounds(move_input, (col_screen, row_screen), bounds):
+                    print(row, col)
                     return row, col
 
         return None
@@ -64,13 +89,3 @@ class HumanPlayer(Player):
         right = render_x + bounds_x
 
         return top < y < bottom and left < x < right
-
-
-
-
-
-
-
-
-
-

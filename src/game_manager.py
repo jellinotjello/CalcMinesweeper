@@ -40,9 +40,16 @@ class GameManager:
         # players can either be Human or AI players
         self.player1 = player1
 
-
         self.current_player = self.player1
         self.game_state = GameState.PLAYING
+
+
+    def animate(self, position : tuple, NUM_ROWS : int, NUM_COLS : int, CELL_SIZE : int) -> None:
+        tile_pos = self.current_player.is_mouse_on_tile(position, NUM_ROWS, NUM_COLS, CELL_SIZE)
+        if not tile_pos:
+            return
+
+        self.board.highlight_tile(tile_pos)
 
 
     def update(self, pending_move):
@@ -69,11 +76,12 @@ class GameManager:
         if self.game_state != GameState.PLAYING:
             return
 
-        self.board.check_winner(pending_move)
+        chosen_move = self.current_player.choose_move(self.board, pending_move,self.NUM_ROWS,self.NUM_COLS,self.CELL_SIZE)
+
+
+        self.board.winner = self.board.check_winner(chosen_move)
         if self.board.winner is not None:
             self.game_state = GameState.GAME_OVER
-
-        chosen_move = self.current_player.choose_move(self.board, pending_move,self.NUM_ROWS,self.NUM_COLS,self.CELL_SIZE)
 
         if self.board.apply_move(chosen_move, self.current_player):
 
@@ -89,7 +97,7 @@ class GameManager:
 
 
     def player_one_won(self):
-        return self.board.winner == self.player1
+        return self.board.winner != 1
 
 
 

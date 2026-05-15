@@ -79,7 +79,7 @@ class Board:
         return self.game_board[row][col] == 0
 
 
-    def check_winner(self, pending_move) -> bool:
+    def check_winner(self, pending_move) -> int:
 
         """
         Check whether the most recent move ended the game (win or tie).
@@ -89,15 +89,10 @@ class Board:
         """
         # want to win when all non-mine squares are filled
         # otherwise we lose
-        # if pending_move is not None:
-        #     if self.game_board[pending_move[0]][pending_move[1]] == 2:
-        #         self.winner = False
-        # return self.winner
-        pass
-
-
-
-
+        if pending_move is not None:
+            if self.game_board[pending_move[0]][pending_move[1]] == 2:
+                self.winner = 1
+        return self.winner
 
     def get_possible_moves(self) -> list[tuple[int, int]]:
 
@@ -111,6 +106,10 @@ class Board:
                 if self.game_board[row][col] == 0:
                     possible_moves.append((row, col))
         return possible_moves
+
+    def highlight_tile(self, position) -> None:
+        pass
+
 
 
 
