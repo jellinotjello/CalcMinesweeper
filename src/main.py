@@ -187,6 +187,15 @@ def draw_squares():
         flag.draw(scale)
 
 def show_latex(LaTeX_string: str, correct_answer=5) -> bool|None:
+    # TODO: If a window is open, prevent future windows from opening by clicking more tiles
+    # TODO: Remove string errors
+    # TODO: Add overall database of integral equations in LaTeX string form + other problems
+    # TODO: Implement SYM.doIt for solving equations automatically
+    # TODO: Convert from text-answer format to answer-choice format (FRQ --> MCQ)
+    # TODO: Improve Window UI...
+    # TODO: Notify player if answer is correct/incorrect
+    # TODO: Keep track of num correct and num incorrect for future
+
     result = {"correct": None}
 
     def submit():
