@@ -49,7 +49,7 @@ class GameManager:
         if not tile_pos:
             return
 
-        self.board.highlight_tile(tile_pos)
+        self.board.highlight_tile(tile_pos, CELL_SIZE, NUM_ROWS, NUM_COLS)
 
 
     def update(self, pending_move):

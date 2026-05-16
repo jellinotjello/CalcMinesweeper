@@ -1,7 +1,7 @@
 import math
 import random
 from collections.abc import Sequence
-from enum import Enum
+from enum import Enum, Flag
 import pygame
 from pygame import mouse
 
@@ -44,6 +44,7 @@ Title = True
 have_mines_been_placed = False
 mines = []
 squares = []
+flags = []
 
 player1 = HumanPlayer(True)
 player2 = HumanPlayer(False)
@@ -82,6 +83,9 @@ def animate() -> None:
 
     # Clear any human player inputs that were applied this frame
     player_move_input = None
+    # print(len(flags))
+    # print(len(mines))
+    # print(len(squares))
 
     # If AI is training, automatically restart next game. After all training episodes save the learned AI policy
 
@@ -97,7 +101,6 @@ def paint() -> None:
         return
 
     draw_game_board()
-    draw_player_moves()
     draw_squares()
 
     if not have_mines_been_placed:
@@ -130,7 +133,7 @@ def draw_game_board() -> None:
         draw_rect_center(constants.window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y - CELL_SIZE * (
                 i - (NUM_ROWS) / 2)), horizontal_line, constants.COLOR_WHITE)
 
-    
+
 
 
 def random_square():
@@ -169,37 +172,74 @@ def draw_mine_positions():
     mines.append(mine)
 
 def draw_squares():
+    # if game_manager.game_state == GameState.GAME_OVER:
     for mine in mines:
         mine.draw(scale)
-
     for square in squares:
         square.draw(scale)
 
-def draw_player_moves() -> None:
+    for flag in flags:
+        flag.draw(scale)
+
+def create_normal_squares(x , y) -> None:
 
     """
     Draw all moves from both players on the board.
     """
+    global player_move_input
 
     # Convert board coordinates (row, col) into screen coordinates for drawing.
     # The board is centered at (BOARD_CENTER_X, BOARD_CENTER_Y).
     board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * (NUM_COLS / 2))
     board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
+    actual_y = math.floor((y - board_origin_y) / CELL_SIZE) * CELL_SIZE + board_origin_y + 1 / 2 * CELL_SIZE
+    actual_x = math.floor((x - board_origin_x) / CELL_SIZE) * CELL_SIZE + board_origin_x + 1 / 2 * CELL_SIZE
+    row = math.floor((y - board_origin_y) / CELL_SIZE)
+    col = math.floor((x - board_origin_x) / CELL_SIZE)
+    mine_count = 0
+    if row > NUM_ROWS - 1 or row < 0 or col > NUM_COLS - 1 or col < 0:
+        return
+    if game_manager.board.game_board[row][col] == 2:
+        game_manager.game_state = GameState.GAME_OVER
+        game_manager.board.winner = 1
+        return
+    elif game_manager.board.game_board[row][col] == 1:
+        return
+    for r in range(-1, 2):
+        for c in range(-1,2):
+            if 0 <= row + r < NUM_ROWS and 0 <= col + c < NUM_COLS:
+                if game_manager.board.game_board[row + r][col + c] == 2:
+                    mine_count += 1
 
-    for row in range(NUM_ROWS):
-        for col in range(NUM_COLS):
-            row_screen = board_origin_y + (row + 0.5) * CELL_SIZE
-            col_screen = board_origin_x + (col + 0.5) * CELL_SIZE
-            mine_count = 0
-            if game_manager.board.game_board[row][col] == game_manager.player1.identifier:
-                for r in range(-1,2):
-                    for c in range(-1,2):
-                        if 0 <= row + r < NUM_ROWS and 0 <= col + c < NUM_COLS:
-                            if game_manager.board.game_board[row + r][col + c] == 2:
-                                mine_count += 1
-                square = Square(row_screen, col_screen, "Normal", Images[f"{mine_count}"])
-                squares.append(square)
+    square = Square(actual_y, actual_x, "Normal", Images[f"{mine_count}"])
+    game_manager.board.game_board[row][col] = 1
+    squares.append(square)
 
+
+
+
+def create_flag(x, y) -> None:
+    board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * (NUM_COLS / 2))
+    board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
+    unique = False
+    actual_y = math.floor((y - board_origin_y) / CELL_SIZE) * CELL_SIZE + board_origin_y + 1 / 2 * CELL_SIZE
+    actual_x = math.floor((x - board_origin_x) / CELL_SIZE) * CELL_SIZE + board_origin_x + 1 / 2 * CELL_SIZE
+    flag_row = math.floor((y - board_origin_y) / CELL_SIZE)
+    flag_col = math.floor((x - board_origin_x) / CELL_SIZE)
+
+    while not unique:
+        unique = True
+
+        for flag in flags:
+            actual_row = ((flag.getRow() - board_origin_y) / CELL_SIZE) - 0.5
+            actual_col = ((flag.getCol() - board_origin_x) / CELL_SIZE) - 0.5
+            if flag_row == round(actual_row) and flag_col == round(actual_col):
+                unique = False
+                flags.remove(flag)
+                return
+    if unique:
+        flag = Square(actual_y, actual_x, "Flag", Images["Flag"])
+        flags.append(flag)
 
 
 
@@ -241,7 +281,7 @@ def process_mouse_event(event: pygame.event.Event) -> None:
                 reset()
         elif game_manager.game_state == GameState.PLAYING and Title is False:
             x_pos, y_pos = mouse.get_pos()
-            player_move_input = x_pos, y_pos
+            create_normal_squares(x_pos, y_pos)
 
 
 def process_key_event(event: pygame.event.Event) -> None:
@@ -254,8 +294,15 @@ def process_key_event(event: pygame.event.Event) -> None:
     """
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
         reset()
+    if pygame.key.get_pressed()[pygame.K_f]:
+        x_pos, y_pos = mouse.get_pos()
+        create_flag(x_pos, y_pos)
     if pygame.key.get_pressed()[pygame.K_p]:
         Title = False
+    if pygame.key.get_pressed()[pygame.K_SPACE]:
+        x_pos, y_pos = mouse.get_pos()
+        create_normal_squares(x_pos , y_pos)
+
 
 
 def process_keys_held(keys: Sequence[bool]) -> None:
@@ -273,12 +320,13 @@ def process_keys_held(keys: Sequence[bool]) -> None:
 # region Game Update Loop ----------------------------------------------------------------------------------------------
 
 def reset() -> None:
-    global have_mines_been_placed, mines, squares
+    global have_mines_been_placed, mines, squares, flags
     # pass is what we put in a function when we have not implemented it yet.
     # After you add code to this method, delete the pass line of code.
     have_mines_been_placed = False
     mines = []
     squares = []
+    flags = []
     game_manager.reset()
     #print("///////////////")
 

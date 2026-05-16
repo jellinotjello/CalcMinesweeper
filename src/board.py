@@ -3,7 +3,8 @@
 import numpy as np
 
 from src import constants
-
+from src.constants import COLOR_GREEN
+from src.utilities import draw_rect_center
 
 """
 Board is the rules and state for a turn-based game.
@@ -92,6 +93,14 @@ class Board:
         if pending_move is not None:
             if self.game_board[pending_move[0]][pending_move[1]] == 2:
                 self.winner = 1
+        found_zero = False
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if self.game_board[i][j] == 0:
+                    found_zero = True
+                    break
+        if not found_zero:
+            self.winner = 0
         return self.winner
 
     def get_possible_moves(self) -> list[tuple[int, int]]:
@@ -107,8 +116,12 @@ class Board:
                     possible_moves.append((row, col))
         return possible_moves
 
-    def highlight_tile(self, position) -> None:
-        pass
+    def highlight_tile(self, position, CELL_SIZE, NUM_ROWS, NUM_COLS) -> None:
+        board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * (NUM_COLS / 2))
+        board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
+        col_screen = board_origin_x + (position[1] + 0.5) * CELL_SIZE
+        row_screen = board_origin_y + (position[0] + 0.5) * CELL_SIZE
+        draw_rect_center(constants.window, (col_screen, row_screen), (CELL_SIZE, CELL_SIZE), COLOR_GREEN)
 
 
 

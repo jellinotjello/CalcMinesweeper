@@ -14,6 +14,8 @@ class Square:
             draw_image(window, self.image, (self.col, self.row), 0, cell_size)
         elif self.type == "Mine":
             draw_image(window, self.image, (self.col, self.row), 0, cell_size)
+        else:
+            draw_image(window, self.image, (self.col, self.row), 0, cell_size)
 
     def getRow(self):
         return self.row
