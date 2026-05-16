@@ -5,6 +5,11 @@ from enum import Enum, Flag
 import pygame
 from pygame import mouse
 
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+
+
 import constants
 from src.Square import Square
 
@@ -181,6 +186,40 @@ def draw_squares():
     for flag in flags:
         flag.draw(scale)
 
+def show_latex(LaTeX_string: str, correct_answer=5) -> bool|None:
+    result = {"correct": None}
+
+    def submit():
+        user_input = float(entry.get())
+        if abs(user_input - correct_answer) < 1e-4:
+            result["correct"] = True
+        else:
+            result["correct"] = False
+        root.destroy() # can make it so that they have multiple tries ??
+
+    root = tk.Tk()
+    root.title("Solve the Integral (ANSWER IS 5 ALWAYS")
+
+    fig = plt.figure(figsize=(4, 1), dpi=100)
+    ax = fig.add_subplot(111)
+    ax.text(0.5, 0.5, LaTeX_string, fontsize=25, ha='center', va='center')
+    ax.axis('off')
+
+    canvas = FigureCanvasTkAgg(fig, master=root)
+    canvas.draw()
+    canvas.get_tk_widget().pack(padx=20, pady=20)
+
+    # Entry box for user answer
+    entry = tk.Entry(root, font=("Arial", 14))
+    entry.pack(pady=10)
+    entry.focus()
+
+    submit_button = tk.Button(root, text="Submit", command=submit)
+    submit_button.pack(pady=5)
+
+    root.mainloop()
+    return result["correct"]
+
 def create_normal_squares(x , y) -> None:
 
     """
@@ -198,6 +237,10 @@ def create_normal_squares(x , y) -> None:
     col = math.floor((x - board_origin_x) / CELL_SIZE)
     mine_count = 0
     if row > NUM_ROWS - 1 or row < 0 or col > NUM_COLS - 1 or col < 0:
+        return
+
+    correct : bool = show_latex(r'$\int_2^7 xdx$')
+    if not correct:
         return
     if game_manager.board.game_board[row][col] == 2:
         game_manager.game_state = GameState.GAME_OVER

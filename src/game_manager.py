@@ -23,6 +23,7 @@ Important:
 
 
 
+
 class GameState(Enum):
     PLAYING = 0     # game is active, moves are still being applied
     GAME_OVER = 1   # a player has won the game, or game ended in a tie
@@ -75,7 +76,6 @@ class GameManager:
 
         if self.game_state != GameState.PLAYING:
             return
-
         chosen_move = self.current_player.choose_move(self.board, pending_move,self.NUM_ROWS,self.NUM_COLS,self.CELL_SIZE)
 
 
