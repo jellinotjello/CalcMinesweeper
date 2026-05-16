@@ -1,4 +1,4 @@
-from src.board import Board
+from asrc.board import Board
 from enum import Enum
 
 
@@ -20,7 +20,6 @@ Important:
 - GameManager contains no rendering or pygame code.
 - Player objects only CHOOSE moves. GameManager applies moves and advances the game.
 """
-
 
 
 
@@ -76,6 +75,7 @@ class GameManager:
 
         if self.game_state != GameState.PLAYING:
             return
+
         chosen_move = self.current_player.choose_move(self.board, pending_move,self.NUM_ROWS,self.NUM_COLS,self.CELL_SIZE)
 
 

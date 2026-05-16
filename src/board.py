@@ -2,9 +2,9 @@
 
 import numpy as np
 
-from src import constants
-from src.constants import COLOR_GREEN
-from src.utilities import draw_rect_center
+from asrc import constants
+from asrc.constants import COLOR_GREEN
+from asrc.utilities import draw_rect_center
 
 """
 Board is the rules and state for a turn-based game.

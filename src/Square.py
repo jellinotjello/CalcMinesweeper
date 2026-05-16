@@ -1,5 +1,5 @@
-from src.utilities import draw_image
-from src.constants import *
+from asrc.utilities import draw_image
+from asrc.constants import *
 
 class Square:
     #AG [type refers to type of square {normal, mine, flag, hint}

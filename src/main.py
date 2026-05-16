@@ -5,40 +5,20 @@ from enum import Enum, Flag
 import pygame
 from pygame import mouse
 
-import tkinter as tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.pyplot as plt
-
-
 import constants
-from src.Square import Square
+from asrc.Square import Square
+from asrc.constants import COLOR_WHITE
 
-from src.game_manager import GameManager, GameState
-from src.human_player import HumanPlayer
+from asrc.game_manager import GameManager, GameState
+from asrc.human_player import HumanPlayer
 
-from src.utilities import load_image, load_gif_frames,draw_image, draw_polygon, draw_rect_center, draw_ellipse_centered, draw_text, \
+from asrc.utilities import load_image, draw_image, draw_polygon, draw_rect_center, draw_ellipse_centered, draw_text, \
     play_music, play_sfx, draw_button
 
 
 pygame.init()
 
 pygame.display.set_caption('Minesweeper')
-Title_sequence = {
-    "Title" : load_image("Title_screen.png"),
-    "Open1" : load_gif_frames("Open1.gif"),
-    "Open2" : load_gif_frames("Open2.gif"),
-    "Set" : load_image("Set.png"),
-    "0" : load_image("00.png"),
-    "1" : load_image("01.png"),
-    "2" : load_image("02.png"),
-    "3" : load_image("03.png"),
-    "4" : load_image("04.png"),
-    "5" : load_image("05.png"),
-    "6" : load_image("06.png"),
-    "7" : load_image("07.png"),
-    "8" : load_image("08.png"),
-    "9" : load_image("09.png"),
-}
 Images = {
     "1" : load_image("1.png"),
     "2" : load_image("2.png"),
@@ -55,19 +35,12 @@ Images = {
 }
 
 # region Global Gameplay Variables -------------------------------------------------------------------------------------\
-NUM_ROWS = 10
-NUM_COLS = 10
-NUM_MINES = 20
+NUM_ROWS = 00
+NUM_COLS = 00
+NUM_MINES = 00
 CELL_SIZE = 00
 scale = 00
-Opening = True
 Title = True
-GameSet = False
-frame_index = 0
-clock = pygame.time.Clock()
-FPS = 24
-FRAME_DELAY = 5
-tick = 0
 
 have_mines_been_placed = False
 mines = []
@@ -79,26 +52,35 @@ player2 = HumanPlayer(False)
 
 game_manager = GameManager(player1, NUM_ROWS, NUM_COLS, CELL_SIZE)
 player_move_input = None
+first_click = True
+
+board_origin_x = 00
+board_origin_y = 00
 
 # Reset button for Human players to restart game
 reset_button = None
-play_button = None
 
 # endregion ------------------------------------------------------------------------------------------------------------
-def startgame():
+def startgame(cols,rows,mines):
     global NUM_ROWS
     global NUM_COLS
     global NUM_MINES
     global CELL_SIZE
     global scale
+    global board_origin_x
+    global board_origin_y
     global game_manager
 
-
-    CELL_SIZE = min(((constants.WINDOW_WIDTH - 20) / NUM_COLS), ((constants.WINDOW_HEIGHT - 20) / NUM_ROWS))
+    NUM_ROWS = rows
+    NUM_COLS = cols
+    NUM_MINES = mines
+    CELL_SIZE = min(((constants.WINDOW_WIDTH - 80) / NUM_COLS), ((constants.WINDOW_HEIGHT - 80) / NUM_ROWS))
     scale = CELL_SIZE / 128
+    board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * (NUM_COLS / 2))
+    board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
     game_manager = GameManager(player1, NUM_ROWS, NUM_COLS, CELL_SIZE)
 
-startgame()
+startgame(24,24,99)
 
 def animate() -> None:
 
@@ -110,7 +92,9 @@ def animate() -> None:
 
     # Clear any human player inputs that were applied this frame
     player_move_input = None
+    # print(game_manager.board.game_board)
     # print(len(flags))
+    # print(first_click)
     # print(len(mines))
     # print(len(squares))
 
@@ -124,12 +108,12 @@ def paint() -> None:
     global Title
 
     if Title:
-        draw_play_button()
-        draw_title()
+        draw_rect_center(constants.window,(constants.BOARD_CENTER_X,constants.BOARD_CENTER_Y),(600,600),constants.COLOR_RED)
         return
 
     draw_game_board()
     draw_squares()
+    flag_counter()
 
     if not have_mines_been_placed:
         for mine in range(NUM_MINES):
@@ -140,54 +124,14 @@ def paint() -> None:
         draw_winner()
         draw_reset_button()
 
-def draw_title() -> None:
-    global Title, Opening, tick, frame_index,GameSet, NUM_ROWS,NUM_COLS,NUM_MINES
-    FRAME_DELAY = 2
-    if tick < 15 * FRAME_DELAY:
-        frames = Title_sequence["Open1"]
-        frames = [pygame.transform.scale(frame, (1000, 600)) for frame in frames]
-        constants.window.blit(frames[frame_index], (0, 0))
-        tick += 1
-        if tick % FRAME_DELAY == 0:
-            frame_index = (frame_index + 1) % len(frames)
-        pygame.display.flip()
-        clock.tick(FPS)
-    elif 15 * FRAME_DELAY <= tick < 20 * FRAME_DELAY:
-        frames = Title_sequence["Open2"]
-        frames = [pygame.transform.scale(frame, (1000, 600)) for frame in frames]
-        constants.window.blit(frames[frame_index], (0, 0))
-        tick += 1
-        if tick % FRAME_DELAY == 0:
-            frame_index = (frame_index + 1) % len(frames)
-        pygame.display.flip()
-        clock.tick(FPS)
-    elif GameSet:
-        draw_image(constants.window, Title_sequence["Set"], (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y))
-        mines = split_num(NUM_MINES)
-        cols = split_num(NUM_COLS)
-        rows = split_num(NUM_ROWS)
-        draw_image(constants.window, Title_sequence[f"{cols[0]}"], (180, 115))
-        draw_image(constants.window, Title_sequence[f"{cols[1]}"], (230, 115))
-        draw_image(constants.window, Title_sequence[f"{cols[2]}"], (280, 115))
-        draw_image(constants.window, Title_sequence[f"{rows[0]}"], (180, 225))
-        draw_image(constants.window, Title_sequence[f"{rows[1]}"], (230, 225))
-        draw_image(constants.window, Title_sequence[f"{rows[2]}"], (280, 225))
-        draw_image(constants.window, Title_sequence[f"{mines[0]}"], (180, 335))
-        draw_image(constants.window, Title_sequence[f"{mines[1]}"], (230, 335))
-        draw_image(constants.window, Title_sequence[f"{mines[2]}"], (280, 335))
-    else:
-        Opening = False
-        draw_image(constants.window,Title_sequence["Title"],(constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y))
-
-def split_num(num):
-    return [int(num/100),int(num/10)-10*int(num/100),num-10*int(num/10)-100*int(num/100)]
 
 def draw_game_board() -> None:
 
     """
     Draws the empty Tic-Tac-Toe game board. (two vertical and two horizontal lines)
     """
-
+    # getting the mouse position
+    # x, y = pyautogui.position()
 
     half_cell_size = CELL_SIZE / 2
     vertical_line = (1, CELL_SIZE * NUM_ROWS)
@@ -201,29 +145,47 @@ def draw_game_board() -> None:
         draw_rect_center(constants.window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y - CELL_SIZE * (
                 i - (NUM_ROWS) / 2)), horizontal_line, constants.COLOR_WHITE)
 
-
-
-
 def random_square():
     rand_row = random.randint(0, NUM_ROWS-1)
     rand_col = random.randint(0, NUM_COLS-1)
     move = (rand_row, rand_col)
     return move
 
+def in_safe_zone(r, c, center_r, center_c):
+    return abs(r - center_r) <= 1 and abs(c - center_c) <= 1
 
+def generate_mines(first_row, first_col, mine_count):
+    global mines , board_origin_y, board_origin_x
+
+    mines.clear()
+    game_manager.board.game_board = [[0 for _ in range(NUM_COLS)] for _ in range(NUM_ROWS)]
+
+    placed = 0
+    while placed < mine_count:
+        r = random.randint(0, NUM_ROWS - 1)
+        c = random.randint(0, NUM_COLS - 1)
+
+        if in_safe_zone(r, c, first_row, first_col):
+            continue
+
+        if game_manager.board.game_board[r][c] == 2:
+            continue
+
+        game_manager.board.game_board[r][c] = 2
+
+        x = board_origin_x + (c + 0.5) * CELL_SIZE
+        y = board_origin_y + (r + 0.5) * CELL_SIZE
+        mines.append(Square(y, x, "Mine", Images["Bomb"]))
+
+        placed += 1
 
 def draw_mine_positions():
-    global mines
-
-    board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * (NUM_COLS / 2))
-    board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
+    global mines, board_origin_y, board_origin_x
     move = None
     unique = False
-
     while not unique:
         a1 = random_square()
         unique = True
-
         for mine in mines:
             actual_row = ((mine.getRow() - board_origin_y) / CELL_SIZE) - 0.5
             actual_col = ((mine.getCol() - board_origin_x) / CELL_SIZE) - 0.5
@@ -231,111 +193,108 @@ def draw_mine_positions():
                 unique = False
                 break
         move = a1
-
     col_screen = board_origin_x + (move[1] + 0.5) * CELL_SIZE
     row_screen = board_origin_y + (move[0] + 0.5) * CELL_SIZE
-
     mine = Square(row_screen, col_screen, "Mine", Images["Bomb"])
     game_manager.board.game_board[move[0]][move[1]] = 2
     mines.append(mine)
-
 def draw_squares():
-    # if game_manager.game_state == GameState.GAME_OVER:
-    for mine in mines:
-        mine.draw(scale)
+    if game_manager.game_state == GameState.GAME_OVER:
+        for mine in mines:
+            mine.draw(scale)
     for square in squares:
         square.draw(scale)
-
+    # for mine in mines:
+    #     mine.draw(scale)
     for flag in flags:
         flag.draw(scale)
 
-def show_latex(LaTeX_string: str, correct_answer=5) -> bool|None:
-    # TODO: If a window is open, prevent future windows from opening by clicking more tiles
-    # TODO: Remove string errors
-    # TODO: Add overall database of integral equations in LaTeX string form + other problems
-    # TODO: Implement SYM.doIt for solving equations automatically
-    # TODO: Convert from text-answer format to answer-choice format (FRQ --> MCQ)
-    # TODO: Improve Window UI...
-    # TODO: Notify player if answer is correct/incorrect
-    # TODO: Keep track of num correct and num incorrect for future
+def is_flagged(row, col):
+    global board_origin_y, board_origin_x
+    for flag in flags:
+        actual_row = ((flag.getRow() - board_origin_y) / CELL_SIZE) - 0.5
+        actual_col = ((flag.getCol() - board_origin_x) / CELL_SIZE) - 0.5
 
-    result = {"correct": None}
+        if row == round(actual_row) and col == round(actual_col):
+            return True
 
-    def submit():
-        user_input = float(entry.get())
-        if abs(user_input - correct_answer) < 1e-4:
-            result["correct"] = True
-        else:
-            result["correct"] = False
-        root.destroy() # can make it so that they have multiple tries ??
-
-    root = tk.Tk()
-    root.title("Solve the Integral (ANSWER IS 5 ALWAYS")
-
-    fig = plt.figure(figsize=(4, 1), dpi=100)
-    ax = fig.add_subplot(111)
-    ax.text(0.5, 0.5, LaTeX_string, fontsize=25, ha='center', va='center')
-    ax.axis('off')
-
-    canvas = FigureCanvasTkAgg(fig, master=root)
-    canvas.draw()
-    canvas.get_tk_widget().pack(padx=20, pady=20)
-
-    # Entry box for user answer
-    entry = tk.Entry(root, font=("Arial", 14))
-    entry.pack(pady=10)
-    entry.focus()
-
-    submit_button = tk.Button(root, text="Submit", command=submit)
-    submit_button.pack(pady=5)
-
-    root.mainloop()
-    return result["correct"]
+    return False
 
 def create_normal_squares(x , y) -> None:
-
     """
     Draw all moves from both players on the board.
     """
-    global player_move_input
+    global player_move_input, first_click , board_origin_y, board_origin_x
 
-    # Convert board coordinates (row, col) into screen coordinates for drawing.
-    # The board is centered at (BOARD_CENTER_X, BOARD_CENTER_Y).
-    board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * (NUM_COLS / 2))
-    board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
     actual_y = math.floor((y - board_origin_y) / CELL_SIZE) * CELL_SIZE + board_origin_y + 1 / 2 * CELL_SIZE
     actual_x = math.floor((x - board_origin_x) / CELL_SIZE) * CELL_SIZE + board_origin_x + 1 / 2 * CELL_SIZE
     row = math.floor((y - board_origin_y) / CELL_SIZE)
     col = math.floor((x - board_origin_x) / CELL_SIZE)
-    mine_count = 0
     if row > NUM_ROWS - 1 or row < 0 or col > NUM_COLS - 1 or col < 0:
         return
+    if first_click:
+        generate_mines(row, col, NUM_MINES)
+        first_click = False
 
-    correct : bool = show_latex(r'$\int_2^7 xdx$')
-    if not correct:
-        return
-    if game_manager.board.game_board[row][col] == 2:
+    if game_manager.board.game_board[row][col] == 2 and first_click == False:
         game_manager.game_state = GameState.GAME_OVER
         game_manager.board.winner = 1
         return
+
     elif game_manager.board.game_board[row][col] == 1:
         return
+    game_manager.board.game_board[row][col] = 1
+    mine_count = mine_counter(row, col)
+    if mine_count == 0:
+        for r in range(-1, 2):
+            for c in range(-1, 2):
+                if r == 0 and c == 0:
+                    continue
+                new_row = row + r
+                new_col = col + c
+                if 0 <= new_row < NUM_ROWS and 0 <= new_col < NUM_COLS:
+                    new_x = board_origin_x + (new_col + 0.5) * CELL_SIZE
+                    new_y = board_origin_y + (new_row + 0.5) * CELL_SIZE
+                    if game_manager.board.game_board[new_row][new_col] == 0:
+                        create_normal_squares(new_x, new_y)
+    square = Square(actual_y, actual_x, "Normal", Images[f"{mine_count}"])
+    squares.append(square)
+    first_click = False
+
+def mine_counter(row, col):
+    mine_counter = 0
     for r in range(-1, 2):
         for c in range(-1,2):
             if 0 <= row + r < NUM_ROWS and 0 <= col + c < NUM_COLS:
                 if game_manager.board.game_board[row + r][col + c] == 2:
-                    mine_count += 1
+                    mine_counter += 1
+    return mine_counter
 
-    square = Square(actual_y, actual_x, "Normal", Images[f"{mine_count}"])
-    game_manager.board.game_board[row][col] = 1
-    squares.append(square)
-
-
+def chording(row, col):
+    global board_origin_y, board_origin_x
+    flag_count = 0
+    for r in range(-1, 2):
+        for c in range(-1, 2):
+            if r == 0 and c == 0:
+                continue
+            if is_flagged(row + r, col + c):
+                flag_count += 1
+    if flag_count == mine_counter(row, col):
+        for r in range(-1, 2):
+            for c in range(-1, 2):
+                if r == 0 and c == 0:
+                    continue
+                new_row = row + r
+                new_col = col + c
+                if 0 <= new_row < NUM_ROWS and 0 <= new_col < NUM_COLS:
+                    new_x = board_origin_x + (new_col + 0.5) * CELL_SIZE
+                    new_y = board_origin_y + (new_row + 0.5) * CELL_SIZE
+                    if not is_flagged(new_row, new_col):
+                        create_normal_squares(new_x, new_y)
 
 
 def create_flag(x, y) -> None:
-    board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * (NUM_COLS / 2))
-    board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
+    global board_origin_y, board_origin_x
     unique = False
     actual_y = math.floor((y - board_origin_y) / CELL_SIZE) * CELL_SIZE + board_origin_y + 1 / 2 * CELL_SIZE
     actual_x = math.floor((x - board_origin_x) / CELL_SIZE) * CELL_SIZE + board_origin_x + 1 / 2 * CELL_SIZE
@@ -349,7 +308,6 @@ def create_flag(x, y) -> None:
             actual_row = ((flag.getRow() - board_origin_y) / CELL_SIZE) - 0.5
             actual_col = ((flag.getCol() - board_origin_x) / CELL_SIZE) - 0.5
             if flag_row == round(actual_row) and flag_col == round(actual_col):
-                unique = False
                 flags.remove(flag)
                 return
     if unique:
@@ -369,18 +327,13 @@ def draw_winner() -> None:
 
     draw_text(constants.window, winner_text, 50, color, (int(constants.WINDOW_WIDTH * 0.5), 100))
 
+def flag_counter():
+    draw_text(constants.window, f"Number of Flags {NUM_MINES - len(flags)}", 30, COLOR_WHITE, (int(constants.WINDOW_WIDTH * 0.5), 20))
+
 def draw_reset_button() -> None:
+
     global reset_button
-
     reset_button = draw_button(constants.window, "Reset",(int(constants.WINDOW_WIDTH * 0.5), constants.WINDOW_HEIGHT - 100), 20, constants.COLOR_RED, constants.COLOR_GREEN)
-
-def draw_play_button() -> None:
-    global play_button, GameSet
-
-    if GameSet:
-        play_button = draw_button(constants.window, "xxxx",(761, 200), 40, constants.COLOR_RED, constants.COLOR_GREEN,(103,63))
-    else:
-        play_button = draw_button(constants.window, "xxxx",(771, 255), 40, constants.COLOR_RED, constants.COLOR_GREEN,(65,30))
 
 
 
@@ -395,24 +348,23 @@ def process_mouse_event(event: pygame.event.Event) -> None:
     """
 
     global player_move_input
-    global reset_button, play_button
-    global Title, GameSet, Opening
-
+    global reset_button
+    global board_origin_y
+    global board_origin_x
 
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-        if Title:
-            if GameSet:
-                if play_button is not None and play_button.collidepoint(event.pos):
-                    GameSet = False
-                    Title = False
-            elif play_button is not None and play_button.collidepoint(event.pos) and not Opening:
-                GameSet = True
-        elif game_manager.game_state == GameState.GAME_OVER:
+        if game_manager.game_state == GameState.GAME_OVER:
             if reset_button is not None and reset_button.collidepoint(event.pos):
                 reset()
         elif game_manager.game_state == GameState.PLAYING and Title is False:
             x_pos, y_pos = mouse.get_pos()
-            create_normal_squares(x_pos, y_pos)
+            row = math.floor((y_pos - board_origin_y) / CELL_SIZE)
+            col = math.floor((x_pos - board_origin_x) / CELL_SIZE)
+            if 0 <= row < NUM_ROWS and 0 <= col < NUM_COLS:
+                if game_manager.board.game_board[row][col] == 0 or game_manager.board.game_board[row][col] == 2:
+                    create_normal_squares(x_pos, y_pos)
+                elif game_manager.board.game_board[row][col] == 1:
+                    chording(row, col)
 
 
 def process_key_event(event: pygame.event.Event) -> None:
@@ -451,35 +403,23 @@ def process_keys_held(keys: Sequence[bool]) -> None:
 # region Game Update Loop ----------------------------------------------------------------------------------------------
 
 def reset() -> None:
-    global have_mines_been_placed, mines, squares, flags,NUM_ROWS,NUM_COLS,NUM_MINES,CELL_SIZE,scale,Opening,Title,Title_sequence,frame_index,clock,FPS,FRAME_DELAY,tick
+    global have_mines_been_placed, mines, squares, flags, first_click
     # pass is what we put in a function when we have not implemented it yet.
     # After you add code to this method, delete the pass line of code.
     have_mines_been_placed = False
     mines = []
     squares = []
     flags = []
+    first_click = True
     game_manager.reset()
-    NUM_ROWS = 00
-    NUM_COLS = 00
-    NUM_MINES = 00
-    CELL_SIZE = 00
-    scale = 00
-    Opening = True
-    Title = True
-    frame_index = 0
-    clock = pygame.time.Clock()
-    FPS = 24
-    FRAME_DELAY = 5
-    tick = 0
-
+    #print("///////////////")
 
 ########################################################################################################################
 # You should not have to edit any of the code in the game update loop below
-
-# I did anyway
 ########################################################################################################################
 
 def play_game():
+    reset()
     
     # If training in headless mode then no rendering (pygame) is needed
         

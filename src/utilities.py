@@ -1,7 +1,7 @@
 import math
 import pygame
 from pathlib import Path
-from PIL import Image
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 IMAGES_DIR = BASE_DIR / 'assets' / 'images'
@@ -38,21 +38,6 @@ def load_image(image_file_name: str, default_scale: float = 1) -> pygame.Surface
         surface.fill((255, 0, 255))
         return surface
 
-def load_gif_frames(path):
-    image_file = IMAGES_DIR / path
-    gif = Image.open(image_file)
-    frames = []
-    try:
-        while True:
-            frame = gif.copy().convert("RGBA")
-            pygame_surface = pygame.image.fromstring(
-                frame.tobytes(), frame.size, "RGBA"
-            ).convert_alpha()
-            frames.append(pygame_surface)
-            gif.seek(gif.tell() + 1)
-    except EOFError:
-        pass
-    return frames
 
 def draw_image(window: pygame.surface, surface: pygame.Surface, center: tuple[int, int], rot: float = 0, scale: float = 1) -> None:
 
