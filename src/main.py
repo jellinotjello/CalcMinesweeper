@@ -5,13 +5,11 @@ from enum import Enum, Flag
 import pygame
 from pygame import mouse
 
-import tkinter as tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.pyplot as plt
 
 
 import constants
 from src.Square import Square
+from src.calculus import Calculus
 
 from src.game_manager import GameManager, GameState
 from src.human_player import HumanPlayer
@@ -68,6 +66,7 @@ clock = pygame.time.Clock()
 FPS = 24
 FRAME_DELAY = 5
 tick = 0
+calculus_manager = Calculus()
 
 have_mines_been_placed = False
 mines = []
@@ -292,48 +291,7 @@ def is_flagged(row, col):
     return False
 
 
-def show_latex(LaTeX_string: str, correct_answer=5) -> bool|None:
-    # TODO: If a window is open, prevent future windows from opening by clicking more tiles
-    # TODO: Remove string errors
-    # TODO: Add overall database of integral equations in LaTeX string form + other problems
-    # TODO: Implement SYM.doIt for solving equations automatically
-    # TODO: Convert from text-answer format to answer-choice format (FRQ --> MCQ)
-    # TODO: Improve Window UI...
-    # TODO: Notify player if answer is correct/incorrect
-    # TODO: Keep track of num correct and num incorrect for future
 
-    result = {"correct": None}
-
-    def submit():
-        user_input = float(entry.get())
-        if abs(user_input - correct_answer) < 1e-4:
-            result["correct"] = True
-        else:
-            result["correct"] = False
-        root.destroy() # can make it so that they have multiple tries ??
-
-    root = tk.Tk()
-    root.title("Solve the Integral (ANSWER IS 5 ALWAYS")
-
-    fig = plt.figure(figsize=(4, 1), dpi=100)
-    ax = fig.add_subplot(111)
-    ax.text(0.5, 0.5, LaTeX_string, fontsize=25, ha='center', va='center')
-    ax.axis('off')
-
-    canvas = FigureCanvasTkAgg(fig, master=root)
-    canvas.draw()
-    canvas.get_tk_widget().pack(padx=20, pady=20)
-
-    # Entry box for user answer
-    entry = tk.Entry(root, font=("Arial", 14))
-    entry.pack(pady=10)
-    entry.focus()
-
-    submit_button = tk.Button(root, text="Submit", command=submit)
-    submit_button.pack(pady=5)
-
-    root.mainloop()
-    return result["correct"]
 
 def create_normal_squares(x , y) -> None:
     """
@@ -489,6 +447,7 @@ def process_mouse_event(event: pygame.event.Event) -> None:
             col = math.floor((x_pos - board_origin_x) / CELL_SIZE)
             if 0 <= row < NUM_ROWS and 0 <= col < NUM_COLS:
                 if game_manager.board.game_board[row][col] == 0 or game_manager.board.game_board[row][col] == 2:
+                    # calculus_manager.ask_question()
                     create_normal_squares(x_pos, y_pos)
                 elif game_manager.board.game_board[row][col] == 1:
                     chording(row, col)

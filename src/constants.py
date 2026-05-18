@@ -68,3 +68,22 @@ PLAYER_2_COLOR = COLOR_RED
 # Game Board
 BOARD_CENTER_X = int(WINDOW_WIDTH / 2)
 BOARD_CENTER_Y = int(WINDOW_HEIGHT / 2)
+
+# Calculus Stuff
+INTEGRALS = [
+    r'\int_2^7 x \, dx',
+    r'\int_1^4 (3x^2 + 2) \, dx',
+    r'\int_0^3 (5 - x) \, dx',
+    r'\int_1^2 (x^3 - 2x) \, dx',
+    r'\int_2^5 (2x + 1) \, dx',
+    r'\int_0^1 (4x^2) \, dx',
+    r'\int_3^6 (x^2 + 1) \, dx',
+    r'\int_1^3 (x^4 - 3x^2 + 2) \, dx',
+    r'\int_5^{10} x \, dx',
+    r'\int_3^{8} (4x^2 + 3) \, dx',
+    r'\int_1^{6} (10 - 2x) \, dx',
+    r'\int_2^{5} (2x^3 - 3x) \, dx',
+    r'\int_4^{9} (3x + 2) \, dx',
+    r'\int_1^{4} (5x^2) \, dx',
+    r'\int_2^{7} (2x^2 + 1) \, dx'
+]
