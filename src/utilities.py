@@ -104,7 +104,7 @@ def draw_polygon(window: pygame.surface, coords: list[tuple[int, int]], center: 
     pygame.draw.polygon(window, color, rotated_points)
 
 
-def draw_rect_center(window: pygame.surface, center: tuple[int,int], size: tuple[int,int], color: tuple[int, int, int], rot: float = 0, border_width: int = 0) -> None:
+def draw_rect_center(window: pygame.surface, center: tuple[int,int], size: tuple[int,int], color: tuple[int, int, int, int|None], rot: float = 0, border_width: int = 0) -> None:
 
     """
     Draw a rectangle center using a center position, optional rotation, and scale.

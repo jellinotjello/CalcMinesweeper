@@ -1,4 +1,4 @@
-from src.utilities import draw_image
+from src.utilities import draw_image, draw_rect_center
 from src.constants import *
 
 class Square:
@@ -14,6 +14,8 @@ class Square:
             draw_image(window, self.image, (self.col, self.row), 0, cell_size)
         elif self.type == "Mine":
             draw_image(window, self.image, (self.col, self.row), 0, cell_size)
+        elif self.type == "Hint":
+            draw_rect_center(window, (self.col, self.row), (cell_size * 128, cell_size * 128), COLOR_ORANGE)
         else:
             draw_image(window, self.image, (self.col, self.row), 0, cell_size)
 
