@@ -128,6 +128,10 @@ def animate() -> None:
 
     # Clear any human player inputs that were applied this frame
     player_move_input = None
+    for row in range(NUM_ROWS):
+        for col in range(NUM_COLS):
+            if game_manager.board.game_board[row][col] == 3:
+                print(row, col)
     # print(len(flags))
     # print(len(mines))
     # print(len(squares))
@@ -154,6 +158,7 @@ def paint() -> None:
 
     draw_game_board()
     draw_squares()
+    flag_counter()
 
     if not have_mines_been_placed:
         for mine in range(NUM_MINES):
@@ -218,9 +223,11 @@ def draw_game_board() -> None:
     half_cell_size = CELL_SIZE / 2
     vertical_line = (1, CELL_SIZE * NUM_ROWS)
     horizontal_line = (CELL_SIZE * NUM_COLS, 1)
-    if not GameSet and not game_transition_completed:
-        counter = 0
-        draw_rect_center(constants.window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y), (constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT),(0, 0, 0, 255 - counter))
+
+    if GameSet and not game_transition_completed:
+        print("bazinggg")
+        # counter = 0
+        # draw_rect_center(constants.window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y), (constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT),(0, 0, 0, 255 - counter))
 
 
     for i in range(0, NUM_COLS+1):
@@ -231,7 +238,7 @@ def draw_game_board() -> None:
         draw_rect_center(constants.window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y - CELL_SIZE * (
                 i - (NUM_ROWS) / 2)), horizontal_line, constants.COLOR_WHITE)
 
-    draw_text(constants.window, str(seconds_elapsed), 20, constants.COLOR_WHITE, (constants.BOARD_CENTER_X, 5))
+    draw_text(constants.window, f" Elapsed Time: {str(seconds_elapsed)}", 20, constants.COLOR_WHITE, (constants.BOARD_CENTER_X * 7/4, 20))
 
 
 
@@ -277,11 +284,13 @@ def addHints(x_pos, y_pos):
     actual_y = math.floor((y_pos - board_origin_y) / CELL_SIZE) * (CELL_SIZE) + board_origin_y + 1 / 2 * CELL_SIZE
     actual_x = math.floor((x_pos - board_origin_x) / CELL_SIZE) * (CELL_SIZE) + board_origin_x + 1 / 2 * CELL_SIZE
 
+    if 0 > hint_row or hint_row > NUM_ROWS - 1 or 0 > hint_col or hint_col > NUM_COLS - 1:
+        return
     if game_manager.board.game_board[hint_row][hint_col] != 1:
         return
+    if len(hints) > 0:
+        hints.clear()
 
-    if 0 > hint_row or hint_row > NUM_ROWS -1 or 0 > hint_col or hint_col > NUM_COLS - 1:
-        return
 
     for r in range(-1, 2):
         for c in range(-1, 2):
@@ -353,6 +362,7 @@ def create_normal_squares(x , y) -> None:
     actual_x = math.floor((x - board_origin_x) / CELL_SIZE) * CELL_SIZE + board_origin_x + 1 / 2 * CELL_SIZE
     row = math.floor((y - board_origin_y) / CELL_SIZE)
     col = math.floor((x - board_origin_x) / CELL_SIZE)
+    has_hidden_square_been_triggered = False
     if row > NUM_ROWS - 1 or row < 0 or col > NUM_COLS - 1 or col < 0:
         return
     if first_click:
@@ -371,8 +381,21 @@ def create_normal_squares(x , y) -> None:
 
     elif game_manager.board.game_board[row][col] == 1:
         return
+    # Anish G : This is to change hidden squares into normal squares after getting question correct
+    if game_manager.board.game_board[row][col] == 3:
+        # Olu, add code to prompt question here, and if right then proceed with deletion of hidden square
+        for hidden_square in hidden_squares:
+            actual_row = ((hidden_square.getRow() - board_origin_y) / CELL_SIZE) - 0.5
+            actual_col = ((hidden_square.getCol() - board_origin_x) / CELL_SIZE) - 0.5
+            if row == round(actual_row) and col == round(actual_col):
+                hidden_squares.remove(hidden_square)
+        has_hidden_square_been_triggered = True
+        game_manager.board.game_board[row][col] = 0
+
+
     game_manager.board.game_board[row][col] = 1
     mine_count = mine_counter(row, col)
+
     if mine_count == 0:
         for r in range(-1, 2):
             for c in range(-1, 2):
@@ -386,8 +409,8 @@ def create_normal_squares(x , y) -> None:
                     if game_manager.board.game_board[new_row][new_col] == 0:
                         create_normal_squares(new_x, new_y)
     hints.clear()
-    rand_val = random.randint(0, 10)
-    if rand_val == 10 and mine_count > 0 and game_manager.board.game_board[row][col] != 2:
+    rand_val = random.randint(0, 0)
+    if rand_val == 0 and mine_count > 0 and game_manager.board.game_board[row][col] != 2 and not has_hidden_square_been_triggered:
         hidden_square = Square(actual_y, actual_x, "Normal", Images["Hidden"])
         hidden_squares.append(hidden_square)
         game_manager.board.game_board[row][col] = 3
@@ -424,7 +447,7 @@ def chording(row, col):
                 if 0 <= new_row < NUM_ROWS and 0 <= new_col < NUM_COLS:
                     new_x = board_origin_x + (new_col + 0.5) * CELL_SIZE
                     new_y = board_origin_y + (new_row + 0.5) * CELL_SIZE
-                    if not is_flagged(new_row, new_col):
+                    if not is_flagged(new_row, new_col) and not game_manager.board.game_board[new_row][new_col] == 3:
                         create_normal_squares(new_x, new_y)
 
 
@@ -467,7 +490,7 @@ def draw_winner() -> None:
     draw_text(constants.window, winner_text, 50, color, (int(constants.WINDOW_WIDTH * 0.5), 100))
 
 def flag_counter():
-    draw_text(constants.window, f"Number of Flags {NUM_MINES - len(flags)}", 30, constants.COLOR_WHITE, (int(constants.WINDOW_WIDTH * 0.5), 20))
+    draw_text(constants.window, f"Number of Flags: {NUM_MINES - len(flags)}", 20, constants.COLOR_WHITE, (int(constants.WINDOW_WIDTH * 0.875), 50))
 
 def draw_reset_button() -> None:
     global reset_button
@@ -533,11 +556,10 @@ def process_mouse_event(event: pygame.event.Event) -> None:
             row = math.floor((y_pos - board_origin_y) / CELL_SIZE)
             col = math.floor((x_pos - board_origin_x) / CELL_SIZE)
             if 0 <= row < NUM_ROWS and 0 <= col < NUM_COLS:
-                if game_manager.board.game_board[row][col] == 0 or game_manager.board.game_board[row][col] == 2:
-                    calculus_manager.ask_question()
-                    create_normal_squares(x_pos, y_pos)
-                elif game_manager.board.game_board[row][col] == 1:
+                if game_manager.board.game_board[row][col] == 1:
                     chording(row, col)
+                else:
+                    create_normal_squares(x_pos, y_pos)
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
         if not Title:
             x_pos, y_pos = mouse.get_pos()
@@ -583,7 +605,7 @@ def process_keys_held(keys: Sequence[bool]) -> None:
 # region Game Update Loop ----------------------------------------------------------------------------------------------
 
 def reset() -> None:
-    global have_mines_been_placed, mines, squares, flags, first_click, Title, GameSet, Opening, tick, frame_index, clock, hints, hidden_squares
+    global have_mines_been_placed, mines, squares, flags, first_click, Title, GameSet, Opening, tick, frame_index, clock, hints, hidden_squares, seconds_elapsed
     # pass is what we put in a function when we have not implemented it yet. ,
     # After you add code to this method, delete the pass line of code.
     have_mines_been_placed = False
@@ -594,6 +616,7 @@ def reset() -> None:
     hidden_squares = []
     first_click = True
     game_manager.reset()
+    seconds_elapsed = 0
     # Title = True
     # GameSet = False
     # Opening = False
