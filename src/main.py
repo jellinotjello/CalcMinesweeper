@@ -70,14 +70,17 @@ tick = 0
 calculus_manager = Calculus()
 seconds_elapsed = 0
 counter = 0
+game_transition_counter = 0
+
 have_mines_been_placed = False
+game_transition_completed = False
+
 mines = []
 squares = []
 flags = []
 hints = []
 hidden_squares = []
 
-game_transition_completed = False
 
 player1 = HumanPlayer(True)
 player2 = HumanPlayer(False)
@@ -122,16 +125,15 @@ def animate() -> None:
     global episode_count
     global seconds_elapsed
     global counter
+    global game_transition_completed
+    global game_transition_counter
+
     # Update game state via game manager
     game_manager.update(player_move_input)
 
 
     # Clear any human player inputs that were applied this frame
     player_move_input = None
-    for row in range(NUM_ROWS):
-        for col in range(NUM_COLS):
-            if game_manager.board.game_board[row][col] == 3:
-                print(row, col)
     # print(len(flags))
     # print(len(mines))
     # print(len(squares))
@@ -145,6 +147,11 @@ def animate() -> None:
         counter += 1
         if counter % constants.FRAME_RATE == constants.FRAME_RATE - 1:
             seconds_elapsed += 1
+
+    if not Title and not game_transition_completed:
+        game_transition_counter += 3
+        if game_transition_counter == 255:
+            game_transition_completed = True
 
 
 def paint() -> None:
@@ -224,12 +231,6 @@ def draw_game_board() -> None:
     vertical_line = (1, CELL_SIZE * NUM_ROWS)
     horizontal_line = (CELL_SIZE * NUM_COLS, 1)
 
-    if GameSet and not game_transition_completed:
-        print("bazinggg")
-        # counter = 0
-        # draw_rect_center(constants.window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y), (constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT),(0, 0, 0, 255 - counter))
-
-
     for i in range(0, NUM_COLS+1):
         draw_rect_center(constants.window,
                          (constants.BOARD_CENTER_X - CELL_SIZE * (i - (NUM_COLS ) / 2),
@@ -240,7 +241,9 @@ def draw_game_board() -> None:
 
     draw_text(constants.window, f" Elapsed Time: {str(seconds_elapsed)}", 20, constants.COLOR_WHITE, (constants.BOARD_CENTER_X * 7/4, 20))
 
-
+    if not Title and not game_transition_completed:
+        global game_transition_counter
+        draw_rect_center(constants.window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y),(constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT), (85, 152, 160, 255 - game_transition_counter))
 
 
 def random_square():
@@ -384,6 +387,10 @@ def create_normal_squares(x , y) -> None:
     # Anish G : This is to change hidden squares into normal squares after getting question correct
     if game_manager.board.game_board[row][col] == 3:
         # Olu, add code to prompt question here, and if right then proceed with deletion of hidden square
+        result = calculus_manager.ask_question()
+        if not result:
+            return
+
         for hidden_square in hidden_squares:
             actual_row = ((hidden_square.getRow() - board_origin_y) / CELL_SIZE) - 0.5
             actual_col = ((hidden_square.getCol() - board_origin_x) / CELL_SIZE) - 0.5
@@ -534,6 +541,7 @@ def process_mouse_event(event: pygame.event.Event) -> None:
                 if play_button is not None and play_button.collidepoint(event.pos):
                     GameSet = False
                     Title = False
+                    play_sfx("menu_select_sound.mp3")
                 elif mines_selection_button is not None and play_button.collidepoint(event.pos):
                     root = tk.Tk()
                     root.withdraw()
@@ -547,6 +555,7 @@ def process_mouse_event(event: pygame.event.Event) -> None:
                 elif height_selection_button is not None and height_selection_button.collidepoint(event.pos):
                     print("h")
             elif play_button is not None and play_button.collidepoint(event.pos) and not Opening:
+                play_sfx("menu_select_sound.mp3")
                 GameSet = True
         elif game_manager.game_state == GameState.GAME_OVER:
             if reset_button is not None and reset_button.collidepoint(event.pos):
@@ -557,8 +566,10 @@ def process_mouse_event(event: pygame.event.Event) -> None:
             col = math.floor((x_pos - board_origin_x) / CELL_SIZE)
             if 0 <= row < NUM_ROWS and 0 <= col < NUM_COLS:
                 if game_manager.board.game_board[row][col] == 1:
+                    play_sfx("menu_select_sound.mp3")
                     chording(row, col)
                 else:
+                    play_sfx("menu_select_sound.mp3")
                     create_normal_squares(x_pos, y_pos)
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
         if not Title:
@@ -638,6 +649,7 @@ def play_game():
     run = True
     frame_rate = int(constants.FRAME_RATE)
     frame_rate = frame_rate if frame_rate > 0 else 15
+    play_music("background_audio.mp3", 1.25)
     while run:
 
         # Limit the game to FRAME_RATE frames per second (delay in milliseconds).

@@ -4,8 +4,8 @@ from pathlib import Path
 from PIL import Image
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-IMAGES_DIR = BASE_DIR / 'assets' / 'images'
-SOUNDS_DIR = BASE_DIR / 'assets' / 'sounds'
+IMAGES_DIR = BASE_DIR / 'assets' / 'Images'
+SOUNDS_DIR = BASE_DIR / 'assets' / 'Sounds'
 
 font_cache = {}
 sound_cache = {}

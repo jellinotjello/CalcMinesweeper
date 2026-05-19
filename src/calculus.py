@@ -13,9 +13,10 @@ class Calculus:
     def ask_question(self) -> bool | None:
         LaTeX_string = constants.INTEGRALS[random.randint(0, len(constants.INTEGRALS) - 1)]
 
-        correct_answer = parse_latex(LaTeX_string).doit()
+        correct_answer = parse_latex(LaTeX_string[1:-1]).doit()
+        print(str(correct_answer))
 
-        result = {"correct": None}
+        result = {"correct": False}
 
         def format_answer(value):
             value = simplify(value)
@@ -79,12 +80,16 @@ class Calculus:
             selected_index = selected_choice.get()
 
             chosen_answer = choices[selected_index]
+            if chosen_answer == correct_answer:
+                result["correct"] = True
             root.destroy()
 
         submit_button = tk.Button(root, text="Submit", command=submit, font=("Arial", 14))
         submit_button.pack(pady=15)
 
         root.mainloop()
+
+        print(result["correct"])
 
         return result["correct"]
 
