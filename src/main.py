@@ -71,6 +71,7 @@ calculus_manager = Calculus()
 seconds_elapsed = 0
 counter = 0
 game_transition_counter = 0
+numHintsleft = 5
 
 have_mines_been_placed = False
 game_transition_completed = False
@@ -166,6 +167,7 @@ def paint() -> None:
     draw_game_board()
     draw_squares()
     flag_counter()
+    hint_limiter()
 
     if not have_mines_been_placed:
         for mine in range(NUM_MINES):
@@ -281,7 +283,7 @@ def generate_mines(first_row, first_col, mine_count):
         placed += 1
 
 def addHints(x_pos, y_pos):
-    global board_origin_y, board_origin_x, is_hint_active
+    global board_origin_y, board_origin_x, is_hint_active, numHintsleft
     hint_row = math.floor((y_pos- board_origin_y) / CELL_SIZE)
     hint_col = math.floor((x_pos- board_origin_x) / CELL_SIZE)
     actual_y = math.floor((y_pos - board_origin_y) / CELL_SIZE) * (CELL_SIZE) + board_origin_y + 1 / 2 * CELL_SIZE
@@ -290,6 +292,8 @@ def addHints(x_pos, y_pos):
     if 0 > hint_row or hint_row > NUM_ROWS - 1 or 0 > hint_col or hint_col > NUM_COLS - 1:
         return
     if game_manager.board.game_board[hint_row][hint_col] != 1:
+        return
+    if numHintsleft <= 0:
         return
     if len(hints) > 0:
         hints.clear()
@@ -304,7 +308,7 @@ def addHints(x_pos, y_pos):
             if game_manager.board.game_board[hint_row + r][hint_col + c] == 2:
                 hint = Square(actual_y + (r * CELL_SIZE), actual_x + (c * CELL_SIZE), "Hint", "None")
                 hints.append(hint)
-
+    numHintsleft -= 1
 
 def draw_mine_positions():
     global mines, board_origin_y, board_origin_x
@@ -465,6 +469,8 @@ def create_flag(x, y) -> None:
     actual_x = math.floor((x - board_origin_x) / CELL_SIZE) * CELL_SIZE + board_origin_x + 1 / 2 * CELL_SIZE
     flag_row = math.floor((y - board_origin_y) / CELL_SIZE)
     flag_col = math.floor((x - board_origin_x) / CELL_SIZE)
+    if Title:
+        return
 
     if 0 > flag_row or flag_row > NUM_ROWS - 1 or flag_col > NUM_COLS - 1 or 0 > flag_col:
         return
@@ -498,6 +504,10 @@ def draw_winner() -> None:
 
 def flag_counter():
     draw_text(constants.window, f"Number of Flags: {NUM_MINES - len(flags)}", 20, constants.COLOR_WHITE, (int(constants.WINDOW_WIDTH * 0.875), 50))
+
+def hint_limiter():
+    draw_text(constants.window, f"Hints Left: {numHintsleft}", 20, constants.COLOR_WHITE, (int(constants.WINDOW_WIDTH * 0.875), 80))
+
 
 def draw_reset_button() -> None:
     global reset_button
@@ -616,7 +626,7 @@ def process_keys_held(keys: Sequence[bool]) -> None:
 # region Game Update Loop ----------------------------------------------------------------------------------------------
 
 def reset() -> None:
-    global have_mines_been_placed, mines, squares, flags, first_click, Title, GameSet, Opening, tick, frame_index, clock, hints, hidden_squares, seconds_elapsed
+    global have_mines_been_placed, mines, squares, flags, first_click, Title, GameSet, Opening, tick, frame_index, clock, hints, hidden_squares, seconds_elapsed, numHintsleft
     # pass is what we put in a function when we have not implemented it yet. ,
     # After you add code to this method, delete the pass line of code.
     have_mines_been_placed = False
@@ -628,6 +638,7 @@ def reset() -> None:
     first_click = True
     game_manager.reset()
     seconds_elapsed = 0
+    numHintsleft = 5
     # Title = True
     # GameSet = False
     # Opening = False

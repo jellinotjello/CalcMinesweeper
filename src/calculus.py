@@ -6,6 +6,8 @@ import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
+
+
 class Calculus:
     def __init__(self):
         pass
@@ -81,11 +83,16 @@ class Calculus:
 
             chosen_answer = choices[selected_index]
             if chosen_answer == correct_answer:
+                print("true")
                 result["correct"] = True
+            plt.close(fig) # Then try it in your
             root.destroy()
+
 
         submit_button = tk.Button(root, text="Submit", command=submit, font=("Arial", 14))
         submit_button.pack(pady=15)
+
+        print("Finished initializing")
 
         root.mainloop()
 
