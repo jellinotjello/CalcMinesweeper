@@ -121,7 +121,10 @@ class Board:
         board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
         col_screen = board_origin_x + (position[1] + 0.5) * CELL_SIZE
         row_screen = board_origin_y + (position[0] + 0.5) * CELL_SIZE
-        draw_rect_center(constants.window, (col_screen, row_screen), (CELL_SIZE, CELL_SIZE), COLOR_GREEN)
+        actual_row = round(((row_screen - board_origin_y) / CELL_SIZE) - 0.5)
+        actual_col = round(((col_screen - board_origin_x) / CELL_SIZE) - 0.5)
+        if self.game_board[actual_row][actual_col] == 0 or self.game_board[actual_row][actual_col] == 2:
+            draw_rect_center(constants.window, (col_screen, row_screen), (CELL_SIZE, CELL_SIZE), COLOR_GREEN)
 
 
 

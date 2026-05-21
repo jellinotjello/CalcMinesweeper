@@ -1,3 +1,5 @@
+import pygame
+
 import src.constants as constants
 from sympy import simplify
 import random
@@ -85,7 +87,6 @@ class Calculus:
             if chosen_answer == correct_answer:
                 print("true")
                 result["correct"] = True
-            plt.close(fig) # Then try it in your
             root.destroy()
 
 
@@ -94,6 +95,8 @@ class Calculus:
 
         print("Finished initializing")
 
+
+        plt.close(fig)
         root.mainloop()
 
         print(result["correct"])

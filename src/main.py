@@ -52,17 +52,21 @@ Images = {
     "Bomb" : load_image("Bomb.png"),
     "Flag" : load_image("Flag.png"),
     "Hidden" : load_image("Hidden.png"),
+    "Background" : load_image("background_square.png"),
 }
 
 # region Global Gameplay Variables -------------------------------------------------------------------------------------\
-NUM_ROWS = 10
-NUM_COLS = 10
-NUM_MINES = 20
+NUM_ROWS = 16
+NUM_COLS = 30
+NUM_MINES = 101
 CELL_SIZE = 00
 scale = 00
 Opening = True
 Title = True
 GameSet = False
+mines_Selection = False
+height_Selection = False
+width_Selection = False
 frame_index = 0
 clock = pygame.time.Clock()
 FRAME_DELAY = 5
@@ -93,7 +97,6 @@ first_click = True
 board_origin_x = 00
 board_origin_y = 00
 
-# Reset button for Human players to restart game
 reset_button = None
 play_button = None
 height_selection_button = None
@@ -112,13 +115,11 @@ def startgame():
     global game_manager
 
 
-    CELL_SIZE = min(((constants.WINDOW_WIDTH - 80) / NUM_COLS), ((constants.WINDOW_HEIGHT - 80) / NUM_ROWS))
+    CELL_SIZE = min(((constants.WINDOW_WIDTH - 20) / NUM_COLS), ((constants.WINDOW_HEIGHT - 20) / NUM_ROWS))
     scale = CELL_SIZE / 128
     board_origin_x = constants.BOARD_CENTER_X - (CELL_SIZE * (NUM_COLS / 2))
     board_origin_y = constants.BOARD_CENTER_Y - (CELL_SIZE * (NUM_ROWS / 2))
     game_manager = GameManager(player1, NUM_ROWS, NUM_COLS, CELL_SIZE)
-
-startgame()
 
 def animate() -> None:
 
@@ -129,19 +130,13 @@ def animate() -> None:
     global game_transition_completed
     global game_transition_counter
 
-    # Update game state via game manager
+    if Title:
+        return
+
     game_manager.update(player_move_input)
 
-
-    # Clear any human player inputs that were applied this frame
     player_move_input = None
-    # print(len(flags))
-    # print(len(mines))
-    # print(len(squares))
 
-    # If AI is training, automatically restart next game. After all training episodes save the learned AI policy
-
-    # TODO: add highlight shi here
     game_manager.animate(mouse.get_pos(), NUM_ROWS, NUM_COLS, CELL_SIZE)
 
     if game_manager.game_state == GameState.PLAYING:
@@ -169,9 +164,6 @@ def paint() -> None:
     flag_counter()
     hint_limiter()
 
-    if not have_mines_been_placed:
-        for mine in range(NUM_MINES):
-            draw_mine_positions()
     have_mines_been_placed = True
 
     if game_manager.game_state == GameState.GAME_OVER:
@@ -179,7 +171,7 @@ def paint() -> None:
         draw_reset_button()
 
 def draw_title() -> None:
-    global Title, Opening, tick, frame_index,GameSet, NUM_ROWS,NUM_COLS,NUM_MINES
+    global Title, Opening, tick, frame_index,GameSet, NUM_ROWS,NUM_COLS,NUM_MINES, mines_Selection, width_Selection, height_Selection, GameSet
     FRAME_DELAY = 2
     if tick < 15 * FRAME_DELAY:
         frames = Title_sequence["Open1"]
@@ -199,6 +191,38 @@ def draw_title() -> None:
         pygame.display.flip()
     elif GameSet:
         draw_selection_button()
+        if mines_Selection:
+            root = tk.Tk()
+            root.withdraw()
+            user_input = simpledialog.askstring("Input", "Mines?")
+            if user_input:
+                NUM_MINES = int(user_input)
+                setminesthing()
+            mines_Selection = False
+        elif height_Selection:
+            root = tk.Tk()
+            root.withdraw()
+            user_input = simpledialog.askstring("Input", "Height?")
+            if user_input:
+                NUM_ROWS = int(user_input)
+                if NUM_ROWS < 10:
+                    NUM_ROWS = 10
+                elif NUM_ROWS > 999:
+                    NUM_ROWS = 999
+                setminesthing()
+            height_Selection = False
+        elif width_Selection:
+            root = tk.Tk()
+            root.withdraw()
+            user_input = simpledialog.askstring("Input", "Height?")
+            if user_input:
+                NUM_COLS = int(user_input)
+                if NUM_COLS < 10:
+                    NUM_COLS = 10
+                elif NUM_COLS > 999:
+                    NUM_COLS = 999
+                setminesthing()
+            width_Selection = False
         draw_image(constants.window, Title_sequence["Set"], (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y))
         mines = split_num(NUM_MINES)
         cols = split_num(NUM_COLS)
@@ -217,30 +241,25 @@ def draw_title() -> None:
         draw_image(constants.window,Title_sequence["Title"],(constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y))
 
 def split_num(num):
-    return [int(num/100),int(num/10)-10*int(num/100),num-10*int(num/10)-100*int(num/100)]
+    return [int(num/100),int(num/10)-10*int(num/100),num-10*int(num/10)]
+
+def setminesthing():
+    global NUM_MINES
+    if NUM_MINES < 10:
+        NUM_MINES = 10
+    elif NUM_MINES > 999:
+        NUM_MINES = 999
+    elif NUM_MINES > NUM_COLS * NUM_ROWS - 9:
+        NUM_MINES = NUM_COLS * NUM_ROWS - 9
 
 def draw_game_board() -> None:
-
-    """
-    Draws the empty Tic-Tac-Toe game board. (two vertical and two horizontal lines)
-    """
-
     global game_transition_completed
     global counter
 
-
-    half_cell_size = CELL_SIZE / 2
-    vertical_line = (1, CELL_SIZE * NUM_ROWS)
-    horizontal_line = (CELL_SIZE * NUM_COLS, 1)
-
-    for i in range(0, NUM_COLS+1):
-        draw_rect_center(constants.window,
-                         (constants.BOARD_CENTER_X - CELL_SIZE * (i - (NUM_COLS ) / 2),
-                          constants.BOARD_CENTER_Y), vertical_line, constants.COLOR_WHITE)
-    for i in range(0, NUM_ROWS+1):
-        draw_rect_center(constants.window, (constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y - CELL_SIZE * (
-                i - (NUM_ROWS) / 2)), horizontal_line, constants.COLOR_WHITE)
-
+    for i in range(0, NUM_COLS):
+        for j in range(0, NUM_ROWS):
+            draw_image(constants.window, Images["Background"], (constants.BOARD_CENTER_X - CELL_SIZE * (i - NUM_COLS / 2) - 1 / 2 * CELL_SIZE,
+                                                                constants.BOARD_CENTER_Y - CELL_SIZE * (j - NUM_ROWS / 2) - 1 / 2 * CELL_SIZE), scale = scale)
     draw_text(constants.window, f" Elapsed Time: {str(seconds_elapsed)}", 20, constants.COLOR_WHITE, (constants.BOARD_CENTER_X * 7/4, 20))
 
     if not Title and not game_transition_completed:
@@ -310,31 +329,10 @@ def addHints(x_pos, y_pos):
                 hints.append(hint)
     numHintsleft -= 1
 
-def draw_mine_positions():
-    global mines, board_origin_y, board_origin_x
-    move = None
-    unique = False
-    while not unique:
-        a1 = random_square()
-        unique = True
-        for mine in mines:
-            actual_row = ((mine.getRow() - board_origin_y) / CELL_SIZE) - 0.5
-            actual_col = ((mine.getCol() - board_origin_x) / CELL_SIZE) - 0.5
-            if a1[0] == round(actual_row) and a1[1] == round(actual_col):
-                unique = False
-                break
-        move = a1
-    col_screen = board_origin_x + (move[1] + 0.5) * CELL_SIZE
-    row_screen = board_origin_y + (move[0] + 0.5) * CELL_SIZE
-    mine = Square(row_screen, col_screen, "Mine", Images["Bomb"])
-    game_manager.board.game_board[move[0]][move[1]] = 2
-    mines.append(mine)
-
 
 def draw_squares():
-    if game_manager.game_state == GameState.GAME_OVER:
-        for mine in mines:
-            mine.draw(scale)
+    for mine in mines:
+        mine.draw(scale)
     for square in squares:
         square.draw(scale)
     for hint in hints:
@@ -360,9 +358,6 @@ def is_flagged(row, col):
 
 
 def create_normal_squares(x , y) -> None:
-    """
-    Draw all moves from both players on the board.
-    """
     global player_move_input, first_click , board_origin_y, board_origin_x
 
     actual_y = math.floor((y - board_origin_y) / CELL_SIZE) * CELL_SIZE + board_origin_y + 1 / 2 * CELL_SIZE
@@ -388,9 +383,7 @@ def create_normal_squares(x , y) -> None:
 
     elif game_manager.board.game_board[row][col] == 1:
         return
-    # Anish G : This is to change hidden squares into normal squares after getting question correct
     if game_manager.board.game_board[row][col] == 3:
-        # Olu, add code to prompt question here, and if right then proceed with deletion of hidden square
         result = calculus_manager.ask_question()
         if not result:
             return
@@ -407,6 +400,7 @@ def create_normal_squares(x , y) -> None:
     game_manager.board.game_board[row][col] = 1
     mine_count = mine_counter(row, col)
 
+
     if mine_count == 0:
         for r in range(-1, 2):
             for c in range(-1, 2):
@@ -420,7 +414,7 @@ def create_normal_squares(x , y) -> None:
                     if game_manager.board.game_board[new_row][new_col] == 0:
                         create_normal_squares(new_x, new_y)
     hints.clear()
-    rand_val = random.randint(0, 0)
+    rand_val = random.randint(0, 10)
     if rand_val == 0 and mine_count > 0 and game_manager.board.game_board[row][col] != 2 and not has_hidden_square_been_triggered:
         hidden_square = Square(actual_y, actual_x, "Normal", Images["Hidden"])
         hidden_squares.append(hidden_square)
@@ -535,14 +529,8 @@ def draw_selection_button():
 
 def process_mouse_event(event: pygame.event.Event) -> None:
 
-    """
-    This method is called when a mouse event occurs.
-
-    :param event: The Pygame mouse event to process (MOUSEBUTTONDOWN, or MOUSEMOTION)
-    """
-
     global player_move_input
-    global reset_button, play_button, mines_selection_button, width_selection_button, height_selection_button
+    global reset_button, play_button, mines_selection_button, width_selection_button, height_selection_button, mines_Selection, width_Selection, height_Selection
     global Title, GameSet, Opening
 
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -551,19 +539,14 @@ def process_mouse_event(event: pygame.event.Event) -> None:
                 if play_button is not None and play_button.collidepoint(event.pos):
                     GameSet = False
                     Title = False
+                    startgame()
                     play_sfx("menu_select_sound.mp3")
-                elif mines_selection_button is not None and play_button.collidepoint(event.pos):
-                    root = tk.Tk()
-                    root.withdraw()
-
-                    user_input = simpledialog.askstring("Input", "Mines?")
-
-                    if user_input:
-                        print(f"User entered: {user_input}")
+                elif mines_selection_button is not None and mines_selection_button.collidepoint(event.pos):
+                    mines_Selection = True
                 elif width_selection_button is not None and width_selection_button.collidepoint(event.pos):
-                    print("w")
+                    width_Selection = True
                 elif height_selection_button is not None and height_selection_button.collidepoint(event.pos):
-                    print("h")
+                    height_Selection = True
             elif play_button is not None and play_button.collidepoint(event.pos) and not Opening:
                 play_sfx("menu_select_sound.mp3")
                 GameSet = True
@@ -588,7 +571,7 @@ def process_mouse_event(event: pygame.event.Event) -> None:
 
 
 def process_key_event(event: pygame.event.Event) -> None:
-    global Title
+    global Title, GameSet, Opening, tick, frame_index, clock
 
     """
     This method is only called when a key event occurs.
@@ -596,6 +579,12 @@ def process_key_event(event: pygame.event.Event) -> None:
     :param event: The Pygame key KEYDOWN event to process
     """
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+        Title = True
+        GameSet = False
+        Opening = False
+        tick = 0
+        frame_index = 0
+        clock = pygame.time.Clock()
         reset()
     if pygame.key.get_pressed()[pygame.K_f]:
         x_pos, y_pos = mouse.get_pos()
@@ -627,8 +616,6 @@ def process_keys_held(keys: Sequence[bool]) -> None:
 
 def reset() -> None:
     global have_mines_been_placed, mines, squares, flags, first_click, Title, GameSet, Opening, tick, frame_index, clock, hints, hidden_squares, seconds_elapsed, numHintsleft
-    # pass is what we put in a function when we have not implemented it yet. ,
-    # After you add code to this method, delete the pass line of code.
     have_mines_been_placed = False
     mines = []
     squares = []
@@ -639,38 +626,15 @@ def reset() -> None:
     game_manager.reset()
     seconds_elapsed = 0
     numHintsleft = 5
-    # Title = True
-    # GameSet = False
-    # Opening = False
-    # tick = 0
-    # frame_index = 0
-    # clock = pygame.time.Clock()
-
-
-########################################################################################################################
-# You should not have to edit any of the code in the game update loop below
-
-# I did anyway
-########################################################################################################################
 
 def play_game():
-    
-    # If training in headless mode then no rendering (pygame) is needed
-        
     run = True
     frame_rate = int(constants.FRAME_RATE)
     frame_rate = frame_rate if frame_rate > 0 else 15
     play_music("background_audio.mp3", 1.25)
     while run:
 
-        # Limit the game to FRAME_RATE frames per second (delay in milliseconds).
         pygame.time.delay(int(1000 / frame_rate))
-
-
-        # Handle all events from the previous frame.
-        # Quit event - exit game loop
-        # Mouse events: pass to mouse event input handler
-        # Key events: pass to keyboard even input handler
         pygame_events = pygame.event.get()
         for pygame_event in pygame_events:
             if pygame_event.type == pygame.QUIT:
@@ -681,16 +645,11 @@ def play_game():
 
                 if pygame_event.type == pygame.KEYDOWN or pygame_event.type == pygame.KEYUP:
                     process_key_event(pygame_event)
-
-        # Keys held: pass to keys held input handler
         process_keys_held(pygame.key.get_pressed())
-
-        # Update the game state (position, collisions, and timers)
         constants.window.fill(constants.COLOR_BLACK)
+        paint()
         animate()
 
-        # Render visuals
-        paint()
 
         pygame.display.flip()
 
