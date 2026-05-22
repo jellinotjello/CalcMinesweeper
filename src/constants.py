@@ -88,3 +88,22 @@ INTEGRALS = [
     r'$\int_1^{4} (5x^2) \, dx$',
     r'$\int_2^{7} (2x^2 + 1) \, dx$'
 ]
+
+SERIES = [
+    r"$\sum_{n=1}^{\infty}\frac{(x+1)^n}{n}$",
+    r"$\sum_{n=0}^{\infty}\frac{(x-4)^n}{2^n}$",
+    r"$\sum_{n=1}^{\infty}\frac{(-1)^n(x-2)^n}{n}$",
+    r"$\sum_{n=1}^{\infty}\frac{(x+3)^n}{n^2}$",
+    r"$\sum_{n=1}^{\infty}\frac{n(x-1)^n}{5^n}$",
+    r"$\sum_{n=1}^{\infty}\frac{(x-2)^n}{n3^n}$",
+    r"$\sum_{n=0}^{\infty}\frac{(x+5)^n}{n!}$",
+    r"$\sum_{n=1}^{\infty}\frac{n!(x-1)^n}{2^n}$",
+    r"$\sum_{n=1}^{\infty}\frac{(x-6)^n}{\sqrt{n}}$",
+    r"$\sum_{n=1}^{\infty}\frac{(-1)^n(x+2)^n}{\sqrt{n}}$",
+    r"$\sum_{n=1}^{\infty}\frac{(2x-1)^n}{n^3}$",
+    r"$\sum_{n=1}^{\infty}\frac{n(x+4)^n}{n+1}$",
+    r"$\sum_{n=1}^{\infty}\frac{(x-3)^n}{n\ln(n+1)}$",
+    r"$\sum_{n=1}^{\infty}\frac{(x+1)^{2n}}{4^n}$",
+    r"$\sum_{n=1}^{\infty}\frac{(x-7)^n}{n^2 2^n}$",
+    r"$\sum_{n=1}^{\infty}\frac{(-1)^n n(x-2)^n}{4^n}$"
+]

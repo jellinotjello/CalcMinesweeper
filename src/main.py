@@ -240,6 +240,37 @@ def draw_title() -> None:
         Opening = False
         draw_image(constants.window,Title_sequence["Title"],(constants.BOARD_CENTER_X, constants.BOARD_CENTER_Y))
 
+def draw_iso_block(center_x, center_y, width=CELL_SIZE, height=CELL_SIZE, depth=30):
+
+    top = [
+        (center_x, center_y-height//2),
+        (center_x+width//2, center_y),
+        (center_x, center_y+height//2),
+        (center_x-width//2, center_y)
+    ]
+
+
+    left = [
+        top[3],
+        top[2],
+        (top[2][0], top[2][1]+depth),
+        (top[3][0], top[3][1]+depth)
+    ]
+
+    right = [
+        top[1],
+        top[2],
+        (top[2][0], top[2][1]+depth),
+        (top[1][0], top[1][1]+depth)
+    ]
+
+    pygame.draw.polygon(constants.window, (170,170,170), left)
+    pygame.draw.polygon(constants.window, (140,140,140), right)
+    pygame.draw.polygon(constants.window, (210,210,210), top)
+
+    pygame.draw.polygon(constants.window, (255,255,255), top, 2)
+
+
 def split_num(num):
     return [int(num/100),int(num/10)-10*int(num/100),num-10*int(num/10)]
 
